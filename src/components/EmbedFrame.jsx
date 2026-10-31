@@ -91,8 +91,8 @@ export default function EmbedFrame({ src, title, kind, movie, externalUrl, onExp
 
   const isDoc = kind === 'doc'
   const frameBox = expanded
-    ? `fixed inset-0 z-[70] flex flex-col ${isDoc ? 'bg-white' : 'bg-black'}`
-    : `relative overflow-hidden ${isDoc ? 'h-[calc(100dvh-16rem)] min-h-80 rounded-xl border border-stone-200 bg-white dark:border-stone-700' : 'aspect-video bg-black sm:rounded-xl'}`
+    ? `fixed inset-0 z-[70] flex flex-col ${isDoc ? 'bg-surface' : 'bg-black'}`
+    : `relative overflow-hidden ${isDoc ? 'h-[calc(100dvh-16rem)] min-h-80 rounded-xl border border-line bg-surface ' : 'aspect-video bg-black sm:rounded-xl'}`
 
   return (
     <div ref={wrapRef} className={frameBox}>

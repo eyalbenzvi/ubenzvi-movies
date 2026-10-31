@@ -15,7 +15,7 @@ const GRADIENTS = [
  * Drive thumbnails often carry a baked-in letterbox, so the image is slightly zoomed (cropping it)
  * over a blurred copy of itself.
  */
-export default function Thumbnail({ movie, className = '', iconClass = 'size-8' }) {
+export default function Thumbnail({ movie, className = '', iconClass = 'size-8', label = false }) {
   const [state, setState] = useState(movie.thumbnailUrl ? 'loading' : 'failed')
   const gradient = GRADIENTS[movie.index % GRADIENTS.length]
   const Icon = !movie.movieUrl ? VideoOff : movie.type === 'audio' ? Music : Film
@@ -24,11 +24,12 @@ export default function Thumbnail({ movie, className = '', iconClass = 'size-8' 
     <div className={`relative overflow-hidden bg-stone-900 ${className}`}>
       {state !== 'loaded' && (
         <div className={`absolute inset-0 bg-gradient-to-br ${gradient}`}>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Icon className={`${iconClass} text-amber-200/60`} strokeWidth={1.5} aria-hidden />
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-3 text-center">
+            <Icon className={`${iconClass} text-amber-100/80`} strokeWidth={1.5} aria-hidden />
+            {label && <span className="line-clamp-2 font-display text-sm text-amber-50/90">{movie.displayTitle}</span>}
           </div>
           {state === 'loading' && <div className="skeleton absolute inset-0" aria-hidden />}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1 bg-[repeating-linear-gradient(90deg,#f59e0b_0_14px,#be123c_14px_28px,#0f766e_28px_42px)] opacity-50" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1.5 bg-[repeating-linear-gradient(90deg,#f59e0b_0_14px,#be123c_14px_28px,#0f766e_28px_42px)] opacity-70" />
         </div>
       )}
       {movie.thumbnailUrl && state !== 'failed' && (
@@ -48,7 +49,7 @@ export default function Thumbnail({ movie, className = '', iconClass = 'size-8' 
             referrerPolicy="no-referrer"
             onError={() => setState('failed')}
             onLoad={(e) => setState(e.currentTarget.naturalWidth < 20 ? 'failed' : 'loaded')}
-            className={`absolute inset-0 size-full scale-[1.12] object-cover transition-[opacity,transform] duration-500 can-hover:group-hover:scale-[1.18] ${state === 'loaded' ? 'opacity-100' : 'opacity-0'}`}
+            className={`absolute inset-0 size-full scale-[1.12] object-cover transition-[opacity,transform] duration-700 ease-out can-hover:group-hover:scale-[1.15] ${state === 'loaded' ? 'opacity-100' : 'opacity-0'}`}
           />
         </>
       )}

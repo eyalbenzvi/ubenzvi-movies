@@ -13,15 +13,15 @@ const DATE_RE = /(\(?\d{1,2}[/.]\d{1,2}[/.]\d{2,4}\)?|\(?\d{1,2}[/.]\d{2,4}\)?|(
 
 function SegmentList({ segments, terms }) {
   return (
-    <ol className="divide-y divide-stone-200 overflow-hidden rounded-xl border border-stone-200 dark:divide-stone-800 dark:border-stone-800">
+    <ol className="divide-y divide-line overflow-hidden rounded-xl border border-line">
       {segments.map((s, i) => {
         const date = s.text.match(DATE_RE)?.[0]
         const label = date ? s.text.replace(date, '').replace(/\s+[-–]\s*$|^\s*[-–]\s+/g, '').replace(/\s{2,}/g, ' ').trim() : s.text
         return (
-          <li key={i} className="flex items-baseline gap-3 px-3 py-2.5 text-[15px] leading-relaxed sm:px-4">
-            <span className="w-6 shrink-0 text-center text-sm font-bold tabular-nums text-amber-600 dark:text-amber-400">{s.n}</span>
+          <li key={i} className="flex items-baseline gap-3 px-3 py-2.5 text-base leading-6 sm:px-4">
+            <span className="w-6 shrink-0 text-center text-sm font-bold tabular-nums text-amber-700 dark:text-amber-400">{s.n}</span>
             <span className="min-w-0 flex-1"><Highlight text={label || s.text} terms={terms} /></span>
-            {date && <span dir="ltr" className="shrink-0 text-sm tabular-nums text-stone-500 dark:text-stone-400"><Highlight text={date.replace(/[()]/g, '')} terms={terms} /></span>}
+            {date && <span dir="ltr" className="shrink-0 text-sm tabular-nums text-muted"><Highlight text={date.replace(/[()]/g, '')} terms={terms} /></span>}
           </li>
         )
       })}
@@ -41,7 +41,7 @@ function DocTextEditor({ docId, indexEntry, userText, onSave }) {
   const dirty = (userText || '') !== draft
   return (
     <div className="space-y-2">
-      <p className="text-sm text-stone-600 dark:text-stone-300">
+      <p className="text-sm text-muted">
         {indexEntry?.source === 'fetched' ? 'החיפוש כבר כולל את תוכן המסמך. אפשר להוסיף כאן פרטים משלכם (מי מופיע, מה קורה) — גם הם ייכללו בחיפוש.' : 'הדביקו כאן את תוכן המסמך כדי שהחיפוש ימצא כל מילה בו.'}
       </p>
       <textarea
@@ -49,10 +49,10 @@ function DocTextEditor({ docId, indexEntry, userText, onSave }) {
         onChange={(e) => setDraft(e.target.value)}
         rows={5}
         placeholder="טקסט נוסף לחיפוש…"
-        className="w-full resize-y rounded-xl border border-stone-300 bg-white p-3 text-base leading-relaxed outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/30 sm:text-sm dark:border-stone-700 dark:bg-stone-950/50"
+        className="w-full resize-y rounded-xl border border-line-strong bg-surface p-3 text-base leading-relaxed outline-none focus:border-focus focus:ring-2 focus:ring-focus/25 sm:text-sm"
       />
       <div className="flex justify-end">
-        <button type="button" disabled={!dirty} onClick={() => onSave(docId, draft)} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-amber-500 px-4 text-sm font-semibold text-stone-950 hover:bg-amber-400 disabled:bg-stone-200 disabled:text-stone-500 dark:disabled:bg-stone-800">
+        <button type="button" disabled={!dirty} onClick={() => onSave(docId, draft)} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-amber-500 px-4 text-sm font-semibold text-stone-950 hover:bg-amber-400 disabled:bg-amber-500/35 disabled:text-stone-950/60">
           {dirty ? 'שמור' : <><Check className="size-4" aria-hidden /> נשמר</>}
         </button>
       </div>
@@ -70,19 +70,19 @@ function DetailsPanel({ movie, docIndexEntry, userDocText, onSaveDocText, terms 
       {segments.length > 0 && <SegmentList segments={segments} terms={terms} />}
       <div className="flex flex-wrap gap-2">
         {segments.length > 0 && (
-          <button type="button" onClick={() => setShowOriginal((v) => !v)} className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-stone-300 px-3 text-sm font-semibold hover:border-amber-500 hover:text-amber-800 dark:border-stone-700 dark:hover:text-amber-300">
+          <button type="button" onClick={() => setShowOriginal((v) => !v)} className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line-strong px-3 text-sm font-semibold hover:border-amber-500 hover:text-accent-ink">
             <FileText className="size-4" aria-hidden /> {showOriginal ? 'הסתר את המסמך המקורי' : 'הצג את המסמך המקורי'}
           </button>
         )}
-        <a href={movie.detailsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800">
+        <a href={movie.detailsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-muted hover:bg-surface-2">
           <ExternalLink className="size-4" aria-hidden /> פתח ב-Google Docs
         </a>
       </div>
       {showOriginal && movie.detailsEmbedUrl && (
         <EmbedFrame src={movie.detailsEmbedUrl} title={`מה בקלטת – ${movie.displayTitle}`} kind="doc" externalUrl={movie.detailsUrl} />
       )}
-      <details className="group rounded-xl border border-stone-200 dark:border-stone-800">
-        <summary className="flex h-12 cursor-pointer list-none items-center gap-2 px-4 text-sm font-semibold text-stone-600 dark:text-stone-300">
+      <details className="group rounded-xl border border-line">
+        <summary className="flex h-12 cursor-pointer list-none items-center gap-2 px-4 text-sm font-semibold text-muted">
           <Pencil className="size-4" aria-hidden /> הוספת פרטים לחיפוש
           <ChevronLeft className="ms-auto size-4 transition group-open:-rotate-90" aria-hidden />
         </summary>
@@ -103,14 +103,14 @@ function PartsPanel({ parts, current, onSelect }) {
             type="button"
             onClick={() => onSelect(m)}
             aria-current={m.id === current.id ? 'true' : undefined}
-            className={`flex w-full items-center gap-3 rounded-xl p-2 text-start transition ${m.id === current.id ? 'bg-amber-500/15 ring-1 ring-amber-500/60' : 'hover:bg-stone-100 dark:hover:bg-stone-800'}`}
+            className={`flex w-full items-center gap-3 rounded-xl p-2 text-start transition ${m.id === current.id ? 'bg-amber-500/15 ring-1 ring-amber-500/60' : 'hover:bg-surface-2 '}`}
           >
             <Thumbnail movie={m} className="aspect-video w-28 shrink-0 rounded-lg" iconClass="size-5" />
             <span className="min-w-0">
               <span className="block font-semibold">{m.part ? `חלק ${m.part}` : m.displayTitle}</span>
-              <span className="line-clamp-1 text-sm text-stone-500 dark:text-stone-400">{m.displayTitle}</span>
+              <span className="line-clamp-1 text-sm text-muted">{m.displayTitle}</span>
             </span>
-            {m.id === current.id && <span className="ms-auto shrink-0 text-xs font-semibold text-amber-700 dark:text-amber-300">מוצג עכשיו</span>}
+            {m.id === current.id && <span className="ms-auto shrink-0 text-xs font-semibold text-accent-ink">מוצג עכשיו</span>}
           </button>
         </li>
       ))}
@@ -150,7 +150,7 @@ function NotesEditor({ movieId, note, onSave }) {
         onChange={(e) => setDraft(e.target.value)}
         rows={6}
         placeholder="מי מופיע, מה קורה, זיכרונות… (ההערות נשמרות אוטומטית ונכללות בחיפוש)"
-        className="w-full resize-y rounded-xl border border-stone-300 bg-white p-3 text-base leading-relaxed outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/30 sm:text-sm dark:border-stone-700 dark:bg-stone-950/50"
+        className="w-full resize-y rounded-xl border border-line-strong bg-surface p-3 text-base leading-relaxed outline-none transition focus:border-focus focus:ring-2 focus:ring-focus/25 sm:text-sm"
       />
     </section>
   )
@@ -218,22 +218,28 @@ export default function VideoModal({
   return (
     <Sheet onClose={onClose} labelledBy="movie-modal-title" full maxWidth="sm:max-w-5xl">
       {/* Top bar: drag down to close on phones */}
-      <div data-sheet-drag className="relative flex h-12 shrink-0 items-center justify-between gap-2 px-2 sm:h-14 sm:px-4" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-        <span className="pointer-events-none absolute inset-x-0 top-1.5 mx-auto h-1.5 w-10 rounded-full bg-stone-300 sm:hidden dark:bg-stone-600" aria-hidden />
-        <span className="ps-2 text-sm tabular-nums text-stone-500 dark:text-stone-400">{position}</span>
-        <button type="button" onClick={onClose} className="flex size-11 items-center justify-center rounded-full text-stone-600 transition hover:bg-stone-100 hover:text-stone-900 dark:text-stone-300 dark:hover:bg-stone-800 dark:hover:text-white" aria-label="סגור">
+      <div className="relative flex h-14 shrink-0 items-center gap-1 px-2 sm:px-4" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+        <button type="button" onClick={onPrev} disabled={!onPrev} className="flex size-11 items-center justify-center rounded-full text-ink transition hover:bg-surface-2 disabled:opacity-30" aria-label="הסרט הקודם">
+          <ChevronRight className="size-6" aria-hidden />
+        </button>
+        <span className="min-w-0 truncate px-1 text-sm tabular-nums text-muted">{position}</span>
+        <button type="button" onClick={onNext} disabled={!onNext} className="flex size-11 items-center justify-center rounded-full text-ink transition hover:bg-surface-2 disabled:opacity-30" aria-label="הסרט הבא">
+          <ChevronLeft className="size-6" aria-hidden />
+        </button>
+        <span className="flex-1" />
+        <button type="button" onClick={onClose} className="flex size-11 items-center justify-center rounded-full text-muted transition hover:bg-surface-2 hover:text-ink" aria-label="סגור">
           <X className="size-6" aria-hidden />
         </button>
       </div>
 
       <div ref={scrollRef} className="scrollbar-thin flex-1 overflow-y-auto overscroll-contain">
         {/* Player (sticks to the top while scrolling the details on phones) */}
-        <div className="sticky top-0 z-20 bg-white sm:static sm:px-6 dark:bg-stone-900">
+        <div className="sticky top-0 z-20 bg-surface sm:static sm:px-6">
           <div className="sm:mx-auto sm:max-w-[calc(56dvh*16/9)]">
           {movie.embedUrl ? (
             <EmbedFrame key={`${movie.id}-${jump.n}`} src={withStartTime(movie.embedUrl, jump.t)} title={movie.displayTitle} kind="video" movie={movie} externalUrl={movie.movieUrl} onExpandedChange={onExpandedChange} />
           ) : (
-            <div className="flex aspect-video flex-col items-center justify-center gap-2 bg-stone-100 text-center text-stone-500 sm:rounded-xl dark:bg-stone-950">
+            <div className="flex aspect-video flex-col items-center justify-center gap-2 bg-surface-2 text-center text-muted sm:rounded-xl">
               <VideoOff className="size-8 text-amber-500" aria-hidden />
               <p className="font-medium">לסרט הזה עדיין אין קישור לצפייה.</p>
             </div>
@@ -241,15 +247,15 @@ export default function VideoModal({
           </div>
         </div>
 
-        <div className="space-y-4 px-4 pb-8 pt-4 sm:px-6" style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
+        <div className="space-y-4 px-4 pb-8 pt-4 sm:mx-auto sm:max-w-[calc(56dvh*16/9+3rem)] sm:px-6" style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
           {jumpNote && (
-            <p className="animate-fade-in text-sm font-medium text-amber-700 dark:text-amber-300" role="status">
+            <p className="animate-fade-in text-sm font-medium text-accent-ink" role="status">
               ▶ הסרטון ינוגן מ-<span dir="ltr" className="tabular-nums">{jumpNote}</span> — לחצו על ניגון
             </p>
           )}
           <div>
-            <h2 id="movie-modal-title" className="font-display text-xl font-bold leading-tight sm:text-2xl">{movie.displayTitle}</h2>
-            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-stone-500 dark:text-stone-400">
+            <h2 id="movie-modal-title" className="font-display text-2xl font-bold leading-[1.15] sm:text-[28px]">{movie.displayTitle}</h2>
+            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
               {year && <span className="tabular-nums">{year}</span>}
               {movie.part && <span>חלק {movie.part}{parts.length > 1 ? ` מתוך ${parts.length}` : ''}</span>}
               {movie.type === 'audio' && <span>הקלטת שמע</span>}
@@ -258,24 +264,18 @@ export default function VideoModal({
 
           {/* Actions */}
           <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-            <button type="button" onClick={() => onToggleFavorite(movie.id)} aria-pressed={isFavorite} className={`inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm font-semibold transition ${isFavorite ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400' : 'bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700'}`}>
-              <Heart className={`size-4 ${isFavorite ? 'fill-current' : ''}`} aria-hidden /> {isFavorite ? 'במועדפים' : 'מועדף'}
-            </button>
-            <button type="button" onClick={onPrev} disabled={!onPrev} className="inline-flex h-10 shrink-0 items-center gap-1 rounded-full bg-stone-100 pe-4 ps-3 text-sm font-semibold transition hover:bg-stone-200 disabled:opacity-40 dark:bg-stone-800 dark:hover:bg-stone-700">
-              <ChevronRight className="size-4" aria-hidden /> הקודם
-            </button>
-            <button type="button" onClick={onNext} disabled={!onNext} className="inline-flex h-10 shrink-0 items-center gap-1 rounded-full bg-stone-100 pe-3 ps-4 text-sm font-semibold transition hover:bg-stone-200 disabled:opacity-40 dark:bg-stone-800 dark:hover:bg-stone-700">
-              הבא <ChevronLeft className="size-4" aria-hidden />
+            <button type="button" onClick={() => onToggleFavorite(movie.id)} aria-pressed={isFavorite} className={`inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm font-semibold transition ${isFavorite ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400' : 'bg-amber-500 text-stone-950 hover:bg-amber-400'}`}>
+              <Heart className={`size-4 ${isFavorite ? 'fill-current' : ''}`} aria-hidden /> {isFavorite ? 'במועדפים' : 'הוספה למועדפים'}
             </button>
             {movie.movieUrl && (
-              <a href={movie.movieUrl} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800">
-                <ExternalLink className="size-4" aria-hidden /> <bdi>Google Drive</bdi>
+              <a href={movie.movieUrl} target="_blank" rel="noopener noreferrer" className="ms-auto inline-flex size-10 shrink-0 items-center justify-center rounded-full text-muted hover:bg-surface-2 hover:text-ink" aria-label="פתח ב-Google Drive" title="פתח ב-Google Drive">
+                <ExternalLink className="size-5" aria-hidden />
               </a>
             )}
           </div>
 
           {/* Tabs */}
-          <div role="tablist" aria-label="פרטי הסרט" onKeyDown={onTabKey} className="no-scrollbar -mx-4 flex gap-1 overflow-x-auto border-b border-stone-200 px-4 sm:mx-0 sm:px-0 dark:border-stone-800">
+          <div role="tablist" aria-label="פרטי הסרט" onKeyDown={onTabKey} className="no-scrollbar -mx-4 flex gap-1 overflow-x-auto border-b border-line px-4 sm:mx-0 sm:px-0">
             {tabs.map(({ id, label, icon: Icon, badge }) => (
               <button
                 key={id}
@@ -286,11 +286,11 @@ export default function VideoModal({
                 aria-controls={`panel-${id}`}
                 tabIndex={tab === id ? 0 : -1}
                 onClick={() => setTab(id)}
-                className={`relative inline-flex h-12 shrink-0 items-center gap-1.5 px-3 text-sm font-semibold transition ${tab === id ? 'text-amber-700 dark:text-amber-300' : 'text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200'}`}
+                className={`relative inline-flex h-12 shrink-0 items-center gap-1.5 px-3 text-sm font-semibold transition ${tab === id ? 'text-ink' : 'text-muted hover:text-ink'}`}
               >
                 <Icon className="size-4" aria-hidden /> {label}
-                {badge && <span className="rounded-full bg-amber-500/20 px-1.5 text-[11px] tabular-nums">{badge}</span>}
-                <span className={`absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-amber-500 transition-transform duration-300 ${tab === id ? 'scale-x-100' : 'scale-x-0'}`} />
+                {badge && <span className="grid h-5 min-w-5 place-items-center rounded-full bg-amber-500/20 px-1 text-xs tabular-nums">{badge}</span>}
+                <span className={`absolute inset-x-3 -bottom-px h-[3px] rounded-full bg-amber-500 transition-transform duration-300 ${tab === id ? 'scale-x-100' : 'scale-x-0'}`} />
               </button>
             ))}
           </div>
@@ -305,7 +305,7 @@ export default function VideoModal({
                 <section className="min-w-0">
                   <h3 className="mb-3 flex items-center gap-2 font-semibold"><Tags className="size-4 text-amber-500" aria-hidden /> תגיות</h3>
                   <TagEditor movie={movie} tags={tags} moments={moments} allTags={allTags} onAdd={onAddTag} onRemove={onRemoveTag} onTagClick={onTagClick} onJump={jumpTo} />
-                  <p className="mt-3 text-xs text-stone-500 dark:text-stone-400">לחיצה על תגית מציגה את כל הסרטים שמתויגים בה.</p>
+                  <p className="mt-3 text-xs text-muted">לחיצה על תגית מציגה את כל הסרטים שמתויגים בה.</p>
                 </section>
                 <NotesEditor key={movie.id} movieId={movie.id} note={note} onSave={onSaveNote} />
               </div>

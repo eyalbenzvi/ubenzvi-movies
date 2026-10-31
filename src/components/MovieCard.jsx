@@ -24,21 +24,21 @@ export default function MovieCard({ movie, match, tags, isFavorite, watched, onO
         aria-label={`${movie.displayTitle}${year ? `, ${year}` : ''}`}
       >
         <Thumbnail movie={movie} className="size-full" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/0 via-40%" />
+        <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-black/30 to-transparent" />
 
         <span className="absolute inset-0 m-auto flex size-12 scale-90 items-center justify-center rounded-full bg-amber-500/95 text-stone-950 opacity-0 shadow-lg shadow-black/40 transition-all duration-300 can-hover:group-hover:scale-100 can-hover:group-hover:opacity-100">
           <Play className="size-5 fill-current" aria-hidden />
         </span>
 
-        <div className="absolute bottom-1.5 start-1.5 end-1.5 flex flex-wrap items-center gap-1 text-[11px] font-semibold">
-          {year && <span className="rounded-md bg-black/65 px-1.5 py-0.5 tabular-nums text-white backdrop-blur-sm">{year}</span>}
-          {movie.part && <span className="rounded-md bg-black/65 px-1.5 py-0.5 text-stone-200 backdrop-blur-sm">חלק {movie.part}</span>}
-          {movie.detailsUrl && (
-            <span className="inline-flex items-center gap-0.5 rounded-md bg-amber-500/90 px-1.5 py-0.5 text-stone-950" title='יש פירוט "מה בקלטת"'>
-              <FileText className="size-3" aria-hidden /><span className={compact ? 'sr-only' : 'max-sm:sr-only'}>מה בקלטת</span>
-            </span>
-          )}
-        </div>
+        {year && (
+          <span className="absolute bottom-1.5 start-1.5 rounded-md bg-black/70 px-1.5 py-0.5 text-xs font-semibold tabular-nums text-white">{year}</span>
+        )}
+        {movie.detailsUrl && (
+          <span className="absolute start-1.5 top-1.5 inline-flex items-center gap-1 rounded-md bg-amber-500 px-1.5 py-0.5 text-xs font-semibold text-stone-950" title='יש פירוט "מה בקלטת"'>
+            <FileText className="size-3" aria-hidden /><span className={compact ? 'sr-only' : 'max-sm:sr-only'}>מה בקלטת</span>
+          </span>
+        )}
         {watched && <span className="absolute inset-x-0 bottom-0 h-1 bg-amber-500" title="נצפה לאחרונה" />}
       </button>
 
@@ -51,19 +51,19 @@ export default function MovieCard({ movie, match, tags, isFavorite, watched, onO
         aria-label={isFavorite ? `הסר את ${movie.displayTitle} מהמועדפים` : `הוסף את ${movie.displayTitle} למועדפים`}
         aria-pressed={isFavorite}
       >
-        <span className="flex size-8 items-center justify-center rounded-full bg-black/45 backdrop-blur-sm">
-          <Heart className={`size-[18px] ${isFavorite ? 'fill-current' : ''}`} aria-hidden />
+        <span className="flex size-8 items-center justify-center rounded-full bg-black/55 ring-1 ring-white/15 backdrop-blur-sm">
+          <Heart className={`size-[18px] stroke-[2.25] ${isFavorite ? 'fill-current' : ''}`} aria-hidden />
         </span>
       </button>
 
       <div className="px-0.5 pt-2">
-        <h3 className={`line-clamp-2 font-semibold leading-snug text-stone-900 dark:text-stone-100 ${compact ? 'text-[13px]' : 'text-[13px] sm:text-[15px]'}`}>
-          <button type="button" tabIndex={-1} onClick={() => onOpen(movie)} className="text-start can-hover:hover:text-amber-700 dark:can-hover:hover:text-amber-300">
+        <h3 className={`line-clamp-2 font-semibold leading-5 text-ink ${compact ? 'text-sm' : 'text-sm sm:text-base sm:leading-6'}`}>
+          <button type="button" tabIndex={-1} onClick={() => onOpen(movie)} className="text-start can-hover:hover:text-accent-ink">
             <Highlight text={movie.displayTitle} terms={match?.terms} />
           </button>
         </h3>
         {tags?.length > 0 && !compact && (
-          <p className="mt-1 truncate text-xs text-stone-500 dark:text-stone-400">{tags.join(' · ')}</p>
+          <p className="mt-1 truncate text-xs text-muted">{tags.join(' · ')}</p>
         )}
         {match?.snippet && <div className="mt-1.5"><MatchInfo match={match} compact /></div>}
       </div>

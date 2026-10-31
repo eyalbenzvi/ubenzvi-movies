@@ -1,6 +1,6 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { matchPath, useLocation, useNavigate } from 'react-router-dom'
-import { SearchX } from 'lucide-react'
+import { CassetteTape } from 'lucide-react'
 
 import Header from './components/Header.jsx'
 import FilterBar, { decadeLabel } from './components/FilterBar.jsx'
@@ -267,13 +267,14 @@ export default function App() {
         total={stats.total}
       />
 
-      <main className="mx-auto max-w-7xl space-y-6 px-4 pb-6 pt-4 sm:pt-6 lg:px-8">
+      <main className={`mx-auto max-w-7xl space-y-6 px-4 pb-6 sm:pt-6 lg:px-8 ${showHome ? 'pt-0' : 'pt-4'}`}>
         {showHome && heroMovie && (
           <Hero movie={heroMovie} segments={docIndex[heroMovie.docId]?.segments} onOpen={open} onShuffle={shuffleHero} />
         )}
 
         <FilterBar
-          filters={{ ...filters, sort, view }}
+          filters={{ ...filters, sort, view: showHome ? 'rows' : view === 'rows' ? 'grid' : view }}
+          isHome={showHome}
           setFilter={setFilter}
           decadeCounts={decadeCounts}
           yearsInDecade={yearsInDecade}
@@ -284,29 +285,29 @@ export default function App() {
         />
 
         {showHome ? (
-          <div className="space-y-8">
+          <div className="space-y-7 sm:space-y-10">
             {rows.map((r) => (
               <Row key={r.key} title={r.title} movies={r.items} onSeeAll={r.seeAll} cardProps={itemProps} />
             ))}
           </div>
         ) : visible.length === 0 ? (
           <div className="flex animate-fade-in flex-col items-center gap-3 py-20 text-center">
-            <SearchX className="size-12 text-stone-400" strokeWidth={1.5} aria-hidden />
-            <p className="text-lg font-semibold">
+            <span className="grid size-24 place-items-center rounded-full bg-amber-500/10"><CassetteTape className="size-14 text-amber-500/70" strokeWidth={1.5} aria-hidden /></span>
+            <p className="font-display text-xl font-bold">
               {filters.onlyFavorites && !favorites.length ? 'עוד אין מועדפים' : deferredQuery.trim() ? <>לא נמצא דבר עבור ״<bdi>{deferredQuery.trim()}</bdi>״</> : 'אין סרטים שמתאימים לסינון'}
             </p>
-            <p className="max-w-sm text-sm text-stone-600 dark:text-stone-400">
+            <p className="max-w-sm text-sm text-muted">
               {filters.onlyFavorites && !favorites.length ? 'סמנו ♥ על סרט כדי לשמור אותו כאן.' : 'נסו מילה אחרת או חלק ממנה, או הסירו חלק מהמסננים.'}
             </p>
             <div className="mt-2 flex flex-wrap justify-center gap-2">
               {hasActiveFilters && deferredQuery.trim() && (
-                <button type="button" onClick={() => setFilters(DEFAULT_FILTERS)} className="h-11 rounded-xl border border-stone-300 px-4 text-sm font-semibold hover:border-amber-500 dark:border-stone-700">חיפוש בלי המסננים</button>
+                <button type="button" onClick={() => setFilters(DEFAULT_FILTERS)} className="h-11 rounded-xl border border-line-strong px-4 text-sm font-semibold hover:border-amber-500">חיפוש בלי המסננים</button>
               )}
               <button type="button" onClick={resetFilters} className="h-11 rounded-xl bg-amber-500 px-4 text-sm font-semibold text-stone-950 hover:bg-amber-400">הצג את כל הסרטים</button>
             </div>
           </div>
         ) : view === 'list' ? (
-          <ul className="divide-y divide-stone-200/70 dark:divide-stone-800/70">
+          <ul className="space-y-1">
             {visible.map((m) => <MovieListItem key={m.id} movie={m} {...itemProps(m)} />)}
           </ul>
         ) : (
@@ -316,10 +317,10 @@ export default function App() {
         )}
       </main>
 
-      <footer className="mx-auto max-w-7xl px-4 pb-10 pt-4 text-center text-sm text-stone-600 lg:px-8 dark:text-stone-400" style={{ paddingBottom: 'max(2.5rem, env(safe-area-inset-bottom))' }}>
+      {(showHome || visible.length > 0) && <footer className="mx-auto max-w-7xl px-4 pb-10 pt-4 text-center text-sm text-muted lg:px-8" style={{ paddingBottom: 'max(2.5rem, env(safe-area-inset-bottom))' }}>
         {stats.total} סרטים · {stats.withDetails} עם פירוט ״מה בקלטת״ ·{' '}
-        <button type="button" onClick={() => setTagManagerOpen(true)} className="font-semibold text-amber-700 underline-offset-4 hover:underline dark:text-amber-300">גיבוי התגיות וההערות</button>
-      </footer>
+        <button type="button" onClick={() => setTagManagerOpen(true)} className="font-semibold text-accent-ink underline-offset-4 hover:underline">גיבוי התגיות וההערות</button>
+      </footer>}
 
       {openMovie && (
         <VideoModal

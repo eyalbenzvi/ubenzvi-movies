@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowDownUp, FileText, GalleryHorizontalEnd, Heart, LayoutGrid, List, Music, RotateCcw, SlidersHorizontal, Video, X } from 'lucide-react'
+import { ArrowDownUp, CalendarDays, FileText, GalleryHorizontalEnd, Heart, LayoutGrid, List, Music, RotateCcw, SlidersHorizontal, Video, X } from 'lucide-react'
 import Sheet from './Sheet.jsx'
 import TagChip from './TagChip.jsx'
 import { useBackClose } from '../hooks/useBackClose.js'
@@ -30,10 +30,10 @@ function Pill({ active, onClick, children, title, className = '' }) {
       onClick={onClick}
       title={title}
       aria-pressed={active}
-      className={`inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-sm font-medium transition-colors duration-200 sm:h-9 sm:text-[13px] ${
+      className={`inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-sm font-medium transition-colors duration-200 sm:h-9 ${
         active
           ? 'border-amber-500 bg-amber-500 text-stone-950'
-          : 'border-stone-300 bg-white/70 text-stone-700 hover:border-amber-500/70 hover:text-amber-800 dark:border-stone-700 dark:bg-stone-900/60 dark:text-stone-200 dark:hover:text-amber-300'
+          : 'border-line bg-surface text-muted hover:border-amber-500/70 hover:text-accent-ink'
       } ${className}`}
     >
       {children}
@@ -41,7 +41,7 @@ function Pill({ active, onClick, children, title, className = '' }) {
   )
 }
 
-const Count = ({ n, active }) => <span className={`tabular-nums ${active ? 'text-stone-800' : 'text-stone-500 dark:text-stone-400'}`}>{n}</span>
+const Count = ({ n, active }) => <span className={`tabular-nums ${active ? 'text-stone-800' : 'text-muted'}`}>{n}</span>
 
 function DecadePills({ filters, setFilter, decadeCounts }) {
   const { decade } = filters
@@ -63,15 +63,18 @@ function YearSelect({ filters, setFilter, yearsInDecade }) {
   if (yearsInDecade.length < 2 && year == null) return null
   const years = year != null && !yearsInDecade.some((y) => y.year === year) ? [...yearsInDecade, { year, count: 0 }] : yearsInDecade
   return (
-    <select
-      value={year ?? ''}
-      onChange={(e) => setFilter('year', e.target.value ? Number(e.target.value) : null)}
-      className="h-10 shrink-0 rounded-full border border-amber-500/70 bg-white px-3 text-sm font-medium text-amber-900 outline-none sm:h-9 dark:bg-stone-900 dark:text-amber-200"
-      aria-label="סינון לפי שנה"
-    >
-      <option value="">כל שנות העשור</option>
-      {years.map(({ year: y, count }) => <option key={y} value={y}>{y} ({count})</option>)}
-    </select>
+    <label className="relative inline-flex shrink-0 items-center">
+      <CalendarDays className={`pointer-events-none absolute start-3 size-4 ${year != null ? 'text-accent-ink' : 'text-muted'}`} aria-hidden />
+      <select
+        value={year ?? ''}
+        onChange={(e) => setFilter('year', e.target.value ? Number(e.target.value) : null)}
+        className={`h-10 appearance-none rounded-full border pe-4 ps-9 text-sm font-medium outline-none focus:border-focus sm:h-9 ${year != null ? 'border-amber-500 bg-amber-500/10 text-accent-ink' : 'border-line-strong bg-surface text-ink'}`}
+        aria-label="סינון לפי שנה"
+      >
+        <option value="">כל שנות העשור</option>
+        {years.map(({ year: y, count }) => <option key={y} value={y}>{y} ({count})</option>)}
+      </select>
+    </label>
   )
 }
 
@@ -98,11 +101,11 @@ function Toggles({ filters, setFilter }) {
 function SortSelect({ sort, setFilter, className = '' }) {
   return (
     <label className={`relative inline-flex items-center ${className}`}>
-      <ArrowDownUp className="pointer-events-none absolute start-3 size-4 text-stone-500" aria-hidden />
+      <ArrowDownUp className="pointer-events-none absolute start-3 size-4 text-muted" aria-hidden />
       <select
         value={sort}
         onChange={(e) => setFilter('sort', e.target.value)}
-        className="h-10 w-full appearance-none rounded-full border border-stone-300 bg-white pe-4 ps-9 text-sm font-medium outline-none focus:border-amber-500 sm:h-9 dark:border-stone-700 dark:bg-stone-900"
+        className="h-10 w-full appearance-none rounded-full border border-line-strong bg-surface pe-4 ps-9 text-sm font-medium outline-none focus:border-focus sm:h-9"
         aria-label="מיון"
       >
         {SORTS.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
@@ -111,10 +114,12 @@ function SortSelect({ sort, setFilter, className = '' }) {
   )
 }
 
-function ViewSwitch({ view, setFilter }) {
+function ViewSwitch({ view, setFilter, isHome = true }) {
+  // "Rows" is the home browsing mode; while searching / filtering results are a grid or list.
+  const views = isHome ? VIEWS : VIEWS.filter((v) => v.id !== 'rows')
   return (
-    <div className="flex shrink-0 rounded-full border border-stone-300 p-0.5 dark:border-stone-700" role="group" aria-label="תצוגה">
-      {VIEWS.map(({ id, label, icon: Icon }) => (
+    <div className="flex w-fit shrink-0 rounded-full border border-line p-0.5" role="group" aria-label="תצוגה">
+      {views.map(({ id, label, icon: Icon }) => (
         <button
           key={id}
           type="button"
@@ -122,7 +127,7 @@ function ViewSwitch({ view, setFilter }) {
           aria-pressed={view === id}
           aria-label={`תצוגת ${label}`}
           title={label}
-          className={`flex size-9 items-center justify-center rounded-full transition sm:size-8 ${view === id ? 'bg-amber-500 text-stone-950' : 'text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100'}`}
+          className={`flex size-9 items-center justify-center rounded-full transition sm:size-8 ${view === id ? 'bg-amber-500 text-stone-950' : 'text-muted hover:text-ink'}`}
         >
           <Icon className="size-4" aria-hidden />
         </button>
@@ -134,7 +139,7 @@ function ViewSwitch({ view, setFilter }) {
 function TagFilters({ filters, setFilter, allTags }) {
   const toggleTag = (t) => setFilter('tags', filters.tags.includes(t) ? filters.tags.filter((x) => x !== t) : [...filters.tags, t])
   const used = allTags.filter((t) => t.count > 0 || filters.tags.includes(t.name))
-  if (!used.length) return <p className="text-sm text-stone-500 dark:text-stone-400">עוד אין תגיות. פתחו סרט והוסיפו תגיות בלשונית ״תגיות והערות״.</p>
+  if (!used.length) return <p className="text-sm text-muted">עוד אין תגיות. פתחו סרט והוסיפו תגיות בלשונית ״תגיות והערות״.</p>
   return used.map((t) => <TagChip key={t.name} name={t.name} count={t.count} active={filters.tags.includes(t.name)} onClick={toggleTag} />)
 }
 
@@ -169,35 +174,35 @@ function FilterSheet({ onClose, resultCount, ...props }) {
     <Sheet onClose={close} labelledBy="filters-title">
       <div className="flex items-center justify-between px-5 pb-2" data-sheet-drag>
         <h2 id="filters-title" className="text-lg font-bold">סינון ומיון</h2>
-        <button type="button" onClick={close} className="flex size-11 items-center justify-center rounded-full text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800" aria-label="סגור"><X className="size-5" aria-hidden /></button>
+        <button type="button" onClick={close} className="flex size-11 items-center justify-center rounded-full text-muted hover:bg-surface-2" aria-label="סגור"><X className="size-5" aria-hidden /></button>
       </div>
       <div className="flex-1 space-y-6 overflow-y-auto overscroll-contain px-5 pb-4">
         <section className="space-y-2">
-          <h3 className="text-sm font-semibold text-stone-500 dark:text-stone-400">תקופה</h3>
+          <h3 className="text-sm font-semibold text-muted">תקופה</h3>
           <div className="flex flex-wrap gap-2"><DecadePills {...props} /></div>
           <YearSelect {...props} />
         </section>
         <section className="space-y-2">
-          <h3 className="text-sm font-semibold text-stone-500 dark:text-stone-400">הצג רק</h3>
+          <h3 className="text-sm font-semibold text-muted">הצג רק</h3>
           <div className="flex flex-wrap gap-2"><Toggles {...props} /></div>
         </section>
         <section className="space-y-2">
-          <h3 className="text-sm font-semibold text-stone-500 dark:text-stone-400">תגיות</h3>
+          <h3 className="text-sm font-semibold text-muted">תגיות</h3>
           <div className="flex flex-wrap gap-2"><TagFilters {...props} /></div>
         </section>
         <section className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-stone-500 dark:text-stone-400">מיון</h3>
+            <h3 className="text-sm font-semibold text-muted">מיון</h3>
             <SortSelect sort={filters.sort} setFilter={setFilter} className="w-full" />
           </div>
           <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-stone-500 dark:text-stone-400">תצוגה</h3>
-            <ViewSwitch view={filters.view} setFilter={setFilter} />
+            <h3 className="text-sm font-semibold text-muted">תצוגה</h3>
+            <ViewSwitch view={filters.view} setFilter={setFilter} isHome={props.isHome} />
           </div>
         </section>
       </div>
-      <div className="flex gap-2 border-t border-stone-200 p-4 dark:border-stone-800" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
-        <button type="button" onClick={props.onReset} className="h-12 rounded-xl px-4 text-sm font-semibold text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800">איפוס</button>
+      <div className="flex gap-2 border-t border-line p-4" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
+        <button type="button" onClick={props.onReset} className="h-12 rounded-xl px-4 text-sm font-semibold text-muted hover:bg-surface-2">איפוס</button>
         <button type="button" onClick={close} className="h-12 flex-1 rounded-xl bg-amber-500 text-base font-bold text-stone-950 hover:bg-amber-400">
           הצג {resultCount} סרטים
         </button>
@@ -219,10 +224,11 @@ export default function FilterBar(props) {
         <div className="no-scrollbar -ms-4 flex min-w-0 flex-1 items-center gap-2 overflow-x-auto ps-4">
           <Pill active={activeCount > 0} onClick={() => setSheetOpen(true)}>
             <SlidersHorizontal className="size-4" aria-hidden /> סינון
-            {activeCount > 0 && <span className="flex size-5 items-center justify-center rounded-full bg-stone-950 text-[11px] font-bold text-amber-400">{activeCount}</span>}
+            {activeCount > 0 && <span className="flex size-5 items-center justify-center rounded-full bg-stone-950/85 text-xs font-bold text-amber-300 ring-2 ring-amber-500">{activeCount}</span>}
           </Pill>
           <DecadePills {...props} />
         </div>
+        <ViewSwitch view={filters.view} setFilter={setFilter} isHome={props.isHome} />
       </div>
 
       {/* Tablet & desktop: inline */}
@@ -233,30 +239,29 @@ export default function FilterBar(props) {
         </div>
         {props.allTags.some((t) => t.count > 0) && (
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-sm font-semibold text-stone-500 dark:text-stone-400">תגיות:</span>
+            <span className="text-sm font-semibold text-muted">תגיות:</span>
             <TagFilters {...props} />
           </div>
         )}
         <div className="flex flex-wrap items-center gap-2">
           <Toggles {...props} />
           <div className="ms-auto flex items-center gap-2">
-            <span className="text-sm tabular-nums text-stone-500 dark:text-stone-400" aria-live="polite">
+            <span className="text-sm tabular-nums text-muted" aria-live="polite">
               {resultCount === totalCount ? `${totalCount} סרטים` : `${resultCount} מתוך ${totalCount}`}
             </span>
             <SortSelect sort={filters.sort} setFilter={setFilter} />
-            <ViewSwitch view={filters.view} setFilter={setFilter} />
+            <ViewSwitch view={filters.view} setFilter={setFilter} isHome={props.isHome} />
           </div>
         </div>
       </div>
 
       <ActiveChips filters={filters} setFilter={setFilter} onReset={onReset} />
 
-      <div className="flex items-center justify-between gap-2 sm:hidden">
-        <span className="text-sm tabular-nums text-stone-500 dark:text-stone-400" aria-live="polite">
+      {!props.isHome && (
+        <p className="text-sm tabular-nums text-muted sm:hidden" aria-live="polite">
           {resultCount === totalCount ? `${totalCount} סרטים` : `${resultCount} מתוך ${totalCount}`}
-        </span>
-        <ViewSwitch view={filters.view} setFilter={setFilter} />
-      </div>
+        </p>
+      )}
 
       {sheetOpen && <FilterSheet {...props} onClose={() => setSheetOpen(false)} />}
     </section>

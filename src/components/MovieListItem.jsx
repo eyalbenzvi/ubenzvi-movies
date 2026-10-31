@@ -7,7 +7,7 @@ import { yearLabel } from './MovieCard.jsx'
 export default function MovieListItem({ movie, match, tags, isFavorite, watched, onOpen, onToggleFavorite }) {
   const year = yearLabel(movie)
   return (
-    <li className="group flex items-start gap-3 rounded-xl px-1.5 py-2 transition-colors can-hover:hover:bg-white sm:items-center sm:gap-4 sm:px-3 dark:can-hover:hover:bg-stone-900/70">
+    <li className="group flex items-start gap-3 rounded-xl px-1.5 py-2 transition-colors can-hover:hover:bg-surface sm:items-center sm:gap-4 sm:px-3">
       <button
         type="button"
         onClick={() => onOpen(movie)}
@@ -19,13 +19,13 @@ export default function MovieListItem({ movie, match, tags, isFavorite, watched,
       </button>
 
       <button type="button" onClick={() => onOpen(movie)} className="min-w-0 flex-1 text-start" tabIndex={-1}>
-        <span className="line-clamp-2 font-semibold leading-snug text-stone-900 can-hover:group-hover:text-amber-700 dark:text-stone-100 dark:can-hover:group-hover:text-amber-300">
+        <span className="line-clamp-2 font-semibold leading-snug text-ink can-hover:group-hover:text-accent-ink">
           <Highlight text={movie.displayTitle} terms={match?.terms} />
         </span>
-        <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-stone-500 dark:text-stone-400">
+        <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
           {year && <span className="tabular-nums">{year}</span>}
           {movie.detailsUrl && (
-            <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-300"><FileText className="size-3" aria-hidden /> מה בקלטת</span>
+            <span className="inline-flex items-center gap-1 text-accent-ink"><FileText className="size-3" aria-hidden /> מה בקלטת</span>
           )}
           {tags?.length > 0 && <span className="truncate">{tags.join(' · ')}</span>}
         </span>
@@ -35,7 +35,7 @@ export default function MovieListItem({ movie, match, tags, isFavorite, watched,
       <button
         type="button"
         onClick={() => onToggleFavorite(movie.id)}
-        className={`flex size-11 shrink-0 items-center justify-center rounded-full transition ${isFavorite ? 'text-rose-500' : 'text-stone-400 can-hover:hover:text-rose-500'}`}
+        className={`flex size-11 shrink-0 items-center justify-center self-center rounded-full transition ${isFavorite ? 'text-rose-500' : 'text-subtle can-hover:hover:text-rose-500'}`}
         aria-label={isFavorite ? `הסר את ${movie.displayTitle} מהמועדפים` : `הוסף את ${movie.displayTitle} למועדפים`}
         aria-pressed={isFavorite}
       >

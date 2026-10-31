@@ -8,8 +8,22 @@
 @theme {
   --font-sans: "Heebo", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
   --font-display: "Frank Ruhl Libre", "Heebo", serif;
+  /* Semantic color tokens — light values here, dark overrides on .dark below (contrast-validated) */
+  --color-paper: #faf7f2;
+  --color-surface: #ffffff;
+  --color-surface-2: #f3eee7;
+  --color-line: #e4dcd2;
+  --color-line-strong: #8c7d70;
+  --color-ink: #1c1612;
+  --color-muted: #5c5048;
+  --color-subtle: #78716c;
+  --color-accent: #f59e0b;
+  --color-on-accent: #1a0f05;
+  --color-accent-ink: #b45309;
+  --color-focus: #b45309;
+
   --animate-fade-in: fade-in 0.2s ease-out both;
-  --animate-pop-in: pop-in 0.26s cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
+  --animate-pop-in: pop-in 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   --animate-sheet-up: sheet-up 0.3s cubic-bezier(0.2, 0.9, 0.3, 1) both;
   --animate-rise: rise 0.3s ease-out both;
   --animate-shimmer: shimmer 1.4s linear infinite;
@@ -27,12 +41,25 @@
 }
 @keyframes shimmer { from { background-position: 150% 0 } to { background-position: -50% 0 } }
 
+.dark {
+  --color-paper: #120e0b;
+  --color-surface: #1a1512;
+  --color-surface-2: #241d18;
+  --color-line: #3a302a;
+  --color-line-strong: #6b5d52;
+  --color-ink: #f5f0eb;
+  --color-muted: #b3a89e;
+  --color-subtle: #8f8379;
+  --color-accent-ink: #fcd34d;
+  --color-focus: #f59e0b;
+}
+
 :root { color-scheme: light; }
 :root.dark { color-scheme: dark; }
 
 html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
 body {
-  @apply bg-stone-50 text-stone-900 antialiased dark:bg-[#120e0b] dark:text-stone-100;
+  @apply bg-paper text-ink antialiased;
   font-family: var(--font-sans);
 }
 
@@ -46,10 +73,12 @@ body {
 
 /* One consistent, visible keyboard focus style everywhere */
 :focus-visible {
-  outline: 2px solid var(--color-amber-500);
+  outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }
 input:focus-visible, textarea:focus-visible, select:focus-visible { outline-offset: 0; }
+
+.font-display { font-feature-settings: "lnum"; }
 
 mark.hl {
   @apply rounded-sm bg-amber-300/70 px-0.5 text-inherit dark:bg-amber-500/40;

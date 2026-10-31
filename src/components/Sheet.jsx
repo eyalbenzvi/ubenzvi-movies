@@ -70,7 +70,7 @@ export default function Sheet({ onClose, labelledBy, children, full = false, max
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4" role="presentation">
-      <div className="absolute inset-0 animate-fade-in bg-black/75 backdrop-blur-sm" onClick={onClose} aria-hidden />
+      <div className="absolute inset-0 animate-fade-in bg-stone-950/55 backdrop-blur-sm dark:bg-black/70" onClick={onClose} aria-hidden />
       <div
         ref={panelRef}
         role="dialog"
@@ -82,13 +82,13 @@ export default function Sheet({ onClose, labelledBy, children, full = false, max
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
         style={dragY ? { transform: `translateY(${dragY}px)`, transition: 'none' } : undefined}
-        className={`relative flex w-full animate-sheet-up flex-col overflow-hidden border-stone-200 bg-white shadow-2xl outline-none transition-transform duration-300 dark:border-stone-800 dark:bg-stone-900 sm:animate-pop-in sm:rounded-3xl sm:border ${
+        className={`relative flex w-full animate-sheet-up flex-col overflow-hidden border-line bg-surface shadow-2xl outline-none transition-transform duration-300 sm:animate-pop-in sm:rounded-3xl sm:border ${
           full ? 'h-dvh max-sm:rounded-none sm:h-auto sm:max-h-[94dvh]' : 'max-h-[92dvh] rounded-t-3xl border-t'
         } ${maxWidth} ${className}`}
       >
         {!full && (
           <div data-sheet-drag className="flex shrink-0 cursor-grab justify-center pb-1 pt-2.5 sm:hidden" aria-hidden>
-            <span className="h-1.5 w-10 rounded-full bg-stone-300 dark:bg-stone-600" />
+            <span className="h-1.5 w-10 rounded-full bg-line-strong/50" />
           </div>
         )}
         {children}

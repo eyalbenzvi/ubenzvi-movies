@@ -5,9 +5,9 @@ import { useBackClose } from '../hooks/useBackClose.js'
 import { MAX_IMPORT_BYTES } from '../hooks/useArchiveStore.js'
 
 const btn = 'inline-flex h-11 items-center justify-center gap-1.5 rounded-xl px-4 text-sm font-semibold transition'
-const primary = `${btn} bg-amber-500 text-stone-950 hover:bg-amber-400 disabled:bg-stone-200 disabled:text-stone-500 dark:disabled:bg-stone-800`
-const secondary = `${btn} border border-stone-300 hover:border-amber-500 hover:text-amber-800 dark:border-stone-700 dark:hover:text-amber-300`
-const iconBtn = 'flex size-11 shrink-0 items-center justify-center rounded-xl text-stone-500 transition'
+const primary = `${btn} bg-amber-500 text-stone-950 hover:bg-amber-400 disabled:bg-amber-500/35 disabled:text-stone-950/60`
+const secondary = `${btn} border border-line-strong hover:border-amber-500 hover:text-accent-ink  `
+const iconBtn = 'flex size-11 shrink-0 items-center justify-center rounded-xl text-muted transition'
 
 /** Global tag management + JSON backup. */
 export default function TagManager({ store, activeTags, onTagClick, onRenameTag, onDeleteTag, onClose }) {
@@ -74,9 +74,9 @@ export default function TagManager({ store, activeTags, onTagClick, onRenameTag,
       <header className="flex items-center justify-between gap-2 px-5 pb-3 pt-1 sm:pt-4" data-sheet-drag>
         <div className="min-w-0">
           <h2 id="tag-manager-title" className="flex items-center gap-2 font-display text-xl font-bold"><Tags className="size-5 text-amber-500" aria-hidden /> תגיות וגיבוי</h2>
-          <p className="text-sm text-stone-500 dark:text-stone-400">{allTags.length} תגיות · {Object.keys(notes).length} הערות · {favorites.length} מועדפים</p>
+          <p className="text-sm text-muted">{allTags.length} תגיות · {Object.keys(notes).length} הערות · {favorites.length} מועדפים</p>
         </div>
-        <button type="button" onClick={close} className={`${iconBtn} rounded-full hover:bg-stone-100 dark:hover:bg-stone-800`} aria-label="סגור"><X className="size-5" aria-hidden /></button>
+        <button type="button" onClick={close} className={`${iconBtn} rounded-full hover:bg-surface-2 `} aria-label="סגור"><X className="size-5" aria-hidden /></button>
       </header>
 
       <div className="scrollbar-thin flex-1 space-y-6 overflow-y-auto overscroll-contain px-5 pb-6" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
@@ -87,13 +87,13 @@ export default function TagManager({ store, activeTags, onTagClick, onRenameTag,
             placeholder="שם תגית חדשה…"
             maxLength={40}
             aria-label="שם תגית חדשה"
-            className="h-11 min-w-0 flex-1 rounded-xl border border-stone-300 bg-white px-3 text-base outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/30 sm:text-sm dark:border-stone-700 dark:bg-stone-950/50"
+            className="h-11 min-w-0 flex-1 rounded-xl border border-line-strong bg-surface px-3 text-base outline-none focus:border-focus focus:ring-2 focus:ring-focus/25 sm:text-sm"
           />
           <button type="submit" disabled={!newTag.trim()} className={`${primary} shrink-0`}><Plus className="size-4" aria-hidden /> צור</button>
         </form>
 
-        <ul className="divide-y divide-stone-200 rounded-xl border border-stone-200 dark:divide-stone-800 dark:border-stone-800">
-          {allTags.length === 0 && <li className="p-4 text-center text-sm text-stone-500">אין תגיות עדיין.</li>}
+        <ul className="divide-y divide-line rounded-xl border border-line">
+          {allTags.length === 0 && <li className="p-4 text-center text-sm text-muted">אין תגיות עדיין.</li>}
           {allTags.map(({ name, count }) => (
             <li key={name} className="flex min-w-0 items-center gap-1 px-2 py-1">
               {editing === name ? (
@@ -105,7 +105,7 @@ export default function TagManager({ store, activeTags, onTagClick, onRenameTag,
                     onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); e.preventDefault(); setEditing(null) } }}
                     maxLength={40}
                     aria-label={`שם חדש לתגית ${name}`}
-                    className="h-10 min-w-0 flex-1 rounded-lg border border-amber-500 bg-white px-2 text-base outline-none sm:text-sm dark:bg-stone-950"
+                    className="h-10 min-w-0 flex-1 rounded-lg border border-amber-500 bg-surface px-2 text-base outline-none sm:text-sm"
                   />
                   <button type="submit" className={`${iconBtn} text-emerald-600 hover:bg-emerald-500/10`} aria-label="שמור"><Check className="size-5" aria-hidden /></button>
                   <button type="button" onClick={() => setEditing(null)} className={`${iconBtn} hover:bg-stone-500/10`} aria-label="ביטול"><X className="size-5" aria-hidden /></button>
@@ -114,20 +114,20 @@ export default function TagManager({ store, activeTags, onTagClick, onRenameTag,
                 <div className="flex w-full min-w-0 flex-wrap items-center gap-2 py-1">
                   <span className="min-w-0 flex-1 text-sm">למחוק את <b>{name}</b>{count ? ` מ-${count} סרטים` : ''}?</span>
                   <button type="button" onClick={() => { onDeleteTag(name); setConfirmDelete(null) }} className={`${btn} h-10 bg-rose-600 text-white hover:bg-rose-500`}>מחק</button>
-                  <button type="button" onClick={() => setConfirmDelete(null)} className={`${btn} h-10 hover:bg-stone-100 dark:hover:bg-stone-800`}>ביטול</button>
+                  <button type="button" onClick={() => setConfirmDelete(null)} className={`${btn} h-10 hover:bg-surface-2 `}>ביטול</button>
                 </div>
               ) : (
                 <>
                   <button
                     type="button"
                     onClick={() => { onTagClick(name); close() }}
-                    className={`flex h-11 min-w-0 flex-1 items-center truncate rounded-lg px-2 text-start text-[15px] font-medium hover:text-amber-700 dark:hover:text-amber-300 ${activeTags.includes(name) ? 'text-amber-700 dark:text-amber-300' : ''}`}
+                    className={`flex h-11 min-w-0 flex-1 items-center truncate rounded-lg px-2 text-start text-base font-medium hover:text-accent-ink ${activeTags.includes(name) ? 'text-accent-ink' : ''}`}
                     title="הצג את כל הסרטים עם התגית"
                   >
                     {name}
                   </button>
-                  <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs tabular-nums text-stone-600 dark:bg-stone-800 dark:text-stone-300">{count}</span>
-                  <button type="button" onClick={() => { setEditing(name); setEditValue(name) }} className={`${iconBtn} hover:bg-stone-500/10 hover:text-amber-700`} aria-label={`שנה שם לתגית ${name}`}><Pencil className="size-4" aria-hidden /></button>
+                  <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs tabular-nums text-muted">{count}</span>
+                  <button type="button" onClick={() => { setEditing(name); setEditValue(name) }} className={`${iconBtn} hover:bg-stone-500/10 hover:text-accent-ink`} aria-label={`שנה שם לתגית ${name}`}><Pencil className="size-4" aria-hidden /></button>
                   <button type="button" onClick={() => (count ? setConfirmDelete(name) : onDeleteTag(name))} className={`${iconBtn} hover:bg-rose-500/10 hover:text-rose-600`} aria-label={`מחק את התגית ${name}`}><Trash2 className="size-4" aria-hidden /></button>
                 </>
               )}
@@ -135,20 +135,20 @@ export default function TagManager({ store, activeTags, onTagClick, onRenameTag,
           ))}
         </ul>
 
-        <section className="space-y-3 rounded-xl border border-stone-200 bg-stone-50 p-4 dark:border-stone-800 dark:bg-stone-950/40">
+        <section className="space-y-3 rounded-xl border border-line bg-surface-2 p-4">
           <div>
             <h3 className="font-semibold">גיבוי ושחזור</h3>
-            <p className="mt-1 text-sm leading-relaxed text-stone-600 dark:text-stone-400">
+            <p className="mt-1 text-sm leading-relaxed text-muted">
               התגיות, ההערות והמועדפים נשמרים רק בדפדפן הזה. כדאי לייצא קובץ גיבוי מדי פעם, וכך גם מעבירים אותם למכשיר אחר.
             </p>
           </div>
           <button type="button" onClick={handleExport} className={`${primary} w-full sm:w-auto`}><Download className="size-4" aria-hidden /> ייצוא קובץ גיבוי</button>
 
-          <div className="space-y-2 border-t border-stone-200 pt-3 dark:border-stone-800">
-            <div className="flex rounded-xl border border-stone-300 p-1 dark:border-stone-700" role="radiogroup" aria-label="אופן הייבוא">
+          <div className="space-y-2 border-t border-line pt-3">
+            <div className="flex rounded-xl border border-line-strong p-1" role="radiogroup" aria-label="אופן הייבוא">
               {[['merge', 'מיזוג עם הקיים'], ['replace', 'החלפת הכל']].map(([id, label]) => (
                 <button key={id} type="button" role="radio" aria-checked={importMode === id} onClick={() => setImportMode(id)}
-                  className={`h-10 flex-1 rounded-lg text-sm font-semibold transition ${importMode === id ? 'bg-amber-500 text-stone-950' : 'text-stone-600 dark:text-stone-300'}`}>
+                  className={`h-10 flex-1 rounded-lg text-sm font-semibold transition ${importMode === id ? 'bg-amber-500 text-stone-950' : 'text-muted'}`}>
                   {label}
                 </button>
               ))}
@@ -162,7 +162,7 @@ export default function TagManager({ store, activeTags, onTagClick, onRenameTag,
               <p>הייבוא <b>יחליף</b> את כל התגיות, ההערות והמועדפים הקיימים. להמשיך?</p>
               <div className="flex gap-2">
                 <button type="button" onClick={() => { runImport(pendingReplace, 'replace'); setPendingReplace(null) }} className={`${btn} h-10 bg-rose-600 text-white hover:bg-rose-500`}>כן, להחליף</button>
-                <button type="button" onClick={() => setPendingReplace(null)} className={`${btn} h-10 hover:bg-stone-100 dark:hover:bg-stone-800`}>ביטול</button>
+                <button type="button" onClick={() => setPendingReplace(null)} className={`${btn} h-10 hover:bg-surface-2 `}>ביטול</button>
               </div>
             </div>
           )}

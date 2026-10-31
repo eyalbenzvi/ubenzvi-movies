@@ -8,7 +8,7 @@ import { formatTime } from '../lib/time.js'
 export default function TagChip({ name, active = false, count, onClick, onRemove, times, onTimeClick }) {
   const tone = active
     ? 'border-amber-500 bg-amber-500 text-stone-950'
-    : 'border-stone-300 bg-white/70 text-stone-700 hover:border-amber-500 hover:text-amber-800 dark:border-stone-700 dark:bg-stone-800/60 dark:text-stone-200 dark:hover:border-amber-500/70 dark:hover:text-amber-300'
+    : 'border-line-strong bg-surface text-muted hover:border-amber-500 hover:text-accent-ink   dark:hover:border-amber-500/70 '
   return (
     <span className={`inline-flex min-h-9 max-w-full flex-wrap items-center rounded-full border text-sm font-medium transition-colors ${tone}`}>
       <button
@@ -20,14 +20,14 @@ export default function TagChip({ name, active = false, count, onClick, onRemove
       >
         <Tag className="size-3.5 shrink-0 opacity-70" aria-hidden />
         <span className="truncate">{name}</span>
-        {count != null && <span className={`tabular-nums ${active ? 'text-stone-800' : 'text-stone-500 dark:text-stone-400'}`}>{count}</span>}
+        {count != null && <span className={`tabular-nums ${active ? 'text-stone-800' : 'text-muted'}`}>{count}</span>}
       </button>
       {times?.map((t) => (
         <button
           key={t}
           type="button"
           onClick={(e) => { e.stopPropagation(); onTimeClick?.(t) }}
-          className="ms-0.5 inline-flex h-7 items-center gap-1 rounded-full bg-amber-500/15 px-2 text-[13px] font-semibold tabular-nums text-amber-800 hover:bg-amber-500/30 dark:text-amber-300"
+          className="ms-0.5 inline-flex h-7 items-center gap-1 rounded-full bg-amber-500/15 px-2 text-sm font-semibold tabular-nums text-accent-ink hover:bg-amber-500/30"
           aria-label={`נגן את "${name}" מ-${formatTime(t)}`}
           title="קפיצה לרגע הזה בסרטון"
         >

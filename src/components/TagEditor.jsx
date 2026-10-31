@@ -66,7 +66,7 @@ export default function TagEditor({ movie, tags, moments = [], allTags, onAdd, o
   return (
     <div className="space-y-3">
       <div className="flex min-h-[2.5rem] flex-wrap items-center gap-1.5">
-        {tags.length === 0 && <span className="text-sm text-stone-500 dark:text-stone-400">עוד אין תגיות לסרט הזה.</span>}
+        {tags.length === 0 && <span className="text-sm text-muted">עוד אין תגיות לסרט הזה.</span>}
         {tags.map((t) => (
           <TagChip key={t} name={t} onClick={onTagClick} onRemove={(name) => onRemove(movie.id, name)} times={timesByTag.get(t)} onTimeClick={onJump} />
         ))}
@@ -83,14 +83,14 @@ export default function TagEditor({ movie, tags, moments = [], allTags, onAdd, o
             onKeyDown={onKeyDown}
             placeholder="תגית (לדוגמה: עידן צונח)…"
             maxLength={40}
-            className="h-11 min-w-0 flex-1 rounded-xl border border-stone-300 bg-white px-3 text-base sm:text-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/30 dark:border-stone-700 dark:bg-stone-900"
+            className="h-11 min-w-0 flex-1 rounded-xl border border-line-strong bg-surface px-3 text-base sm:text-sm outline-none transition focus:border-focus focus:ring-2 focus:ring-focus/25"
             aria-label="תגית חדשה"
             role="combobox"
             aria-expanded={open && options.length > 0}
             aria-autocomplete="list"
           />
-          <label className={`relative flex h-11 w-[5.5rem] shrink-0 items-center rounded-xl border bg-white transition focus-within:ring-2 dark:bg-stone-900 ${timeInvalid ? 'border-rose-500 focus-within:ring-rose-500/30' : 'border-stone-300 focus-within:border-amber-500 focus-within:ring-amber-500/30 dark:border-stone-700'}`}>
-            <Clock className="pointer-events-none absolute left-2.5 size-4 text-stone-400" aria-hidden />
+          <label className={`relative flex h-11 w-[5.5rem] shrink-0 items-center rounded-xl border bg-surface transition focus-within:ring-2 ${timeInvalid ? 'border-rose-500 focus-within:ring-rose-500/30' : 'border-line-strong focus-within:border-focus focus-within:ring-focus/25 '}`}>
+            <Clock className="pointer-events-none absolute left-2.5 size-4 text-subtle" aria-hidden />
             <input
               value={time}
               onChange={(e) => setTime(e.target.value)}
@@ -101,27 +101,27 @@ export default function TagEditor({ movie, tags, moments = [], allTags, onAdd, o
               maxLength={8}
               aria-label="זמן בסרטון (דקות:שניות), לא חובה"
               aria-invalid={timeInvalid}
-              className="h-full w-full rounded-xl bg-transparent pl-8 pr-2 text-center text-base tabular-nums outline-none placeholder:text-stone-400 sm:text-sm"
+              className="h-full w-full rounded-xl bg-transparent pl-8 pr-2 text-center text-base tabular-nums outline-none placeholder:text-subtle sm:text-sm"
             />
           </label>
           <button
             type="button"
             onClick={() => commit()}
             disabled={!value.trim() || timeInvalid}
-            className="inline-flex h-11 shrink-0 items-center gap-1 rounded-xl bg-amber-500 px-4 text-sm font-semibold text-stone-950 transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:bg-stone-200 disabled:text-stone-500 dark:disabled:bg-stone-800 dark:disabled:text-stone-500"
+            className="inline-flex h-11 shrink-0 items-center gap-1 rounded-xl bg-amber-500 px-4 text-sm font-semibold text-stone-950 transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:bg-amber-500/35 disabled:text-stone-950/60"
           >
             <Plus className="size-4" /> הוסף
           </button>
         </div>
         {open && options.length > 0 && (
-          <ul role="listbox" className="absolute inset-x-0 top-full z-10 mt-1 max-h-44 animate-fade-in overflow-auto rounded-xl border border-stone-200 bg-white p-1 shadow-xl dark:border-stone-700 dark:bg-stone-900">
+          <ul role="listbox" className="absolute inset-x-0 top-full z-10 mt-1 max-h-44 animate-fade-in overflow-auto rounded-xl border border-line bg-surface p-1 shadow-xl">
             {options.map((o, i) => (
               <li key={o} role="option" aria-selected={i === highlighted}>
                 <button
                   type="button"
                   onMouseDown={(e) => { e.preventDefault(); commit(o) }}
                   onMouseEnter={() => setHighlighted(i)}
-                  className={`w-full rounded-lg px-3 py-2.5 text-start text-sm ${i === highlighted ? 'bg-amber-500/15 text-amber-800 dark:text-amber-200' : ''}`}
+                  className={`w-full rounded-lg px-3 py-2.5 text-start text-sm ${i === highlighted ? 'bg-amber-500/15 text-accent-ink' : ''}`}
                 >
                   {o}
                 </button>
@@ -131,7 +131,7 @@ export default function TagEditor({ movie, tags, moments = [], allTags, onAdd, o
         )}
       </div>
 
-      <p className={`text-xs leading-relaxed ${timeInvalid ? 'text-rose-600 dark:text-rose-400' : 'text-stone-500 dark:text-stone-400'}`}>
+      <p className={`text-xs leading-relaxed ${timeInvalid ? 'text-rose-600 dark:text-rose-400' : 'text-muted'}`}>
         {timeInvalid
           ? 'הזמן לא תקין. כתבו דקות:שניות, למשל 22:10'
           : <>רוצים לסמן רגע? עצרו את הסרטון והקלידו בשדה <Clock className="inline size-3" aria-hidden /> את הזמן שמופיע בנגן (למשל <span dir="ltr">22:10</span>). לחיצה על הזמן בתגית תקפוץ לרגע הזה.</>}
@@ -139,13 +139,13 @@ export default function TagEditor({ movie, tags, moments = [], allTags, onAdd, o
 
       {suggestions.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 text-sm">
-          <span className="inline-flex items-center gap-1 text-stone-500 dark:text-stone-400"><Sparkles className="size-3.5 text-amber-500" /> הצעות:</span>
+          <span className="inline-flex items-center gap-1 text-muted"><Sparkles className="size-3.5 text-amber-500" /> הצעות:</span>
           {suggestions.map((s) => (
             <button
               key={s}
               type="button"
               onClick={() => commit(s)}
-              className="inline-flex h-9 items-center rounded-full border border-dashed border-amber-500/70 px-3 text-sm text-amber-800 transition hover:bg-amber-500/10 dark:text-amber-300"
+              className="inline-flex h-9 items-center rounded-full border border-dashed border-amber-500/70 px-3 text-sm text-accent-ink transition hover:bg-amber-500/10"
             >
               + {s}
             </button>
