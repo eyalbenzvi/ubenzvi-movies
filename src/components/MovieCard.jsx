@@ -19,7 +19,7 @@ export default function MovieCard({ movie, match, tags, isFavorite, watched, onO
     <article className="group relative flex flex-col">
       <button
         type="button"
-        onClick={() => onOpen(movie)}
+        onClick={() => onOpen(movie, match?.moments?.[0]?.t)}
         className="relative block aspect-video w-full overflow-hidden rounded-xl bg-stone-900 text-start shadow-sm ring-1 ring-black/5 transition-all duration-300 can-hover:group-hover:shadow-xl can-hover:group-hover:shadow-black/30 can-hover:group-hover:ring-amber-500/50 dark:ring-white/5"
         aria-label={`${movie.displayTitle}${year ? `, ${year}` : ''}`}
       >
@@ -58,14 +58,14 @@ export default function MovieCard({ movie, match, tags, isFavorite, watched, onO
 
       <div className="px-0.5 pt-2">
         <h3 className={`line-clamp-2 font-semibold leading-5 text-ink ${compact ? 'text-sm' : 'text-sm sm:text-base sm:leading-6'}`}>
-          <button type="button" tabIndex={-1} onClick={() => onOpen(movie)} className="text-start can-hover:hover:text-accent-ink">
+          <button type="button" tabIndex={-1} onClick={() => onOpen(movie, match?.moments?.[0]?.t)} className="text-start can-hover:hover:text-accent-ink">
             <Highlight text={movie.displayTitle} terms={match?.terms} />
           </button>
         </h3>
         {tags?.length > 0 && !compact && (
           <p className="mt-1 truncate text-xs text-muted">{tags.join(' · ')}</p>
         )}
-        {match?.snippet && <div className="mt-1.5"><MatchInfo match={match} compact /></div>}
+        {(match?.snippet || match?.moments?.length > 0) && <div className="mt-1.5"><MatchInfo match={match} compact onOpenAt={(t) => onOpen(movie, t)} /></div>}
       </div>
     </article>
   )

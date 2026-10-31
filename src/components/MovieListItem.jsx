@@ -10,7 +10,7 @@ export default function MovieListItem({ movie, match, tags, isFavorite, watched,
     <li className="group flex items-start gap-3 rounded-xl px-1.5 py-2 transition-colors can-hover:hover:bg-surface sm:items-center sm:gap-4 sm:px-3">
       <button
         type="button"
-        onClick={() => onOpen(movie)}
+        onClick={() => onOpen(movie, match?.moments?.[0]?.t)}
         className="relative shrink-0 overflow-hidden rounded-lg"
         aria-label={`${movie.displayTitle}${year ? `, ${year}` : ''}`}
       >
@@ -18,7 +18,8 @@ export default function MovieListItem({ movie, match, tags, isFavorite, watched,
         {watched && <span className="absolute inset-x-0 bottom-0 h-1 bg-amber-500" />}
       </button>
 
-      <button type="button" onClick={() => onOpen(movie)} className="min-w-0 flex-1 text-start" tabIndex={-1}>
+      <div className="min-w-0 flex-1">
+      <button type="button" onClick={() => onOpen(movie, match?.moments?.[0]?.t)} className="block w-full text-start" tabIndex={-1}>
         <span className="line-clamp-2 font-semibold leading-snug text-ink can-hover:group-hover:text-accent-ink">
           <Highlight text={movie.displayTitle} terms={match?.terms} />
         </span>
@@ -29,8 +30,9 @@ export default function MovieListItem({ movie, match, tags, isFavorite, watched,
           )}
           {tags?.length > 0 && <span className="truncate">{tags.join(' · ')}</span>}
         </span>
-        {match?.snippet && <span className="mt-1.5 block max-w-2xl"><MatchInfo match={match} compact /></span>}
       </button>
+        {(match?.snippet || match?.moments?.length > 0) && <div className="mt-1.5 max-w-2xl"><MatchInfo match={match} compact onOpenAt={(t) => onOpen(movie, t)} /></div>}
+      </div>
 
       <button
         type="button"

@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Check, ChevronLeft, ChevronRight, ExternalLink, FileText, Heart, Layers, Pencil, StickyNote, Tags, VideoOff, X } from 'lucide-react'
+import { BookmarkPlus, Check, ChevronLeft, Maximize2, ChevronRight, ExternalLink, FileText, Heart, Layers, Pencil, StickyNote, Tags, VideoOff, X } from 'lucide-react'
 import EmbedFrame from './EmbedFrame.jsx'
 import Highlight from './Highlight.jsx'
 import Sheet from './Sheet.jsx'
 import TagEditor from './TagEditor.jsx'
+import MomentComposer from './MomentComposer.jsx'
+import MomentList from './MomentList.jsx'
 import Thumbnail from './Thumbnail.jsx'
 import { yearLabel } from './MovieCard.jsx'
 import { parseSegments } from '../lib/docParse.js'
@@ -158,7 +160,7 @@ function NotesEditor({ movieId, note, onSave }) {
 
 export default function VideoModal({
   movie, onClose, onPrev, onNext, position, parts, onSelect, searchTerms,
-  tags, moments, allTags, onAddTag, onRemoveTag, onTagClick,
+  tags, moments, allTags, onAddTag, onRemoveTag, onTagClick, startAt, onUpdateMoment, onRemoveMoment,
   note, onSaveNote, isFavorite, onToggleFavorite,
   docIndexEntry, userDocText, onSaveDocText,
 }) {
@@ -169,23 +171,48 @@ export default function VideoModal({
   ].filter(Boolean)
   const [tab, setTab] = useState(tabs[0].id)
   const [expanded, setExpanded] = useState(false)
-  const [jump, setJump] = useState({ t: 0, n: 0 }) // start time for the player (seconds)
+  const [jump, setJump] = useState(() => ({ t: startAt || 0, n: 0 })) // start time for the player (seconds)
+  const firstRun = useRef(true)
   const scrollRef = useRef(null)
-  const [jumpNote, setJumpNote] = useState(null)
+  const [barNote, setBarNote] = useState(null) // { kind: 'jump' | 'saved', label?, t }
+  const [composerOpen, setComposerOpen] = useState(false)
 
   const jumpTo = useCallback((t) => {
     setJump((j) => ({ t, n: j.n + 1 }))
-    setJumpNote(formatTime(t))
+    setBarNote({ kind: 'jump', t })
     scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
   }, [])
 
   useEffect(() => {
-    setJump({ t: 0, n: 0 })
-    setJumpNote(null)
+    if (firstRun.current) {
+      firstRun.current = false
+      if (startAt) setBarNote({ kind: 'jump', t: startAt })
+      return
+    }
+    setJump((j) => ({ t: startAt || 0, n: j.n + 1 }))
+    setBarNote(startAt ? { kind: 'jump', t: startAt } : null)
+    setComposerOpen(false)
     setTab((t) => (tabs.some((x) => x.id === t) ? t : tabs[0].id))
     scrollRef.current?.scrollTo({ top: 0 })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [movie.id])
+  }, [movie.id, startAt])
+
+  // "✓ נשמר" disappears after a few seconds
+  useEffect(() => {
+    if (barNote?.kind !== 'saved') return
+    const t = setTimeout(() => setBarNote(null), 3500)
+    return () => clearTimeout(t)
+  }, [barNote])
+
+  const saveMoment = useCallback((label, sec) => {
+    onAddTag(movie.id, label, sec)
+    setComposerOpen(false)
+    setBarNote({ kind: 'saved', label, t: sec })
+  }, [onAddTag, movie.id])
+
+  const statusText = barNote?.kind === 'saved'
+    ? `✓ נשמר: ${barNote.label} · ${formatTime(barNote.t)}`
+    : barNote?.kind === 'jump' ? `▶ ${formatTime(barNote.t)} · לחצו ניגון` : ''
 
   // ← / → move between movies (RTL: left = next). Ignored while typing or on the tab list.
   useEffect(() => {
@@ -237,7 +264,39 @@ export default function VideoModal({
         <div className="sticky top-0 z-20 bg-surface sm:static sm:px-6">
           <div className="sm:mx-auto sm:max-w-[calc(56dvh*16/9)]">
           {movie.embedUrl ? (
-            <EmbedFrame key={`${movie.id}-${jump.n}`} src={withStartTime(movie.embedUrl, jump.t)} title={movie.displayTitle} kind="video" movie={movie} externalUrl={movie.movieUrl} onExpandedChange={onExpandedChange} />
+            <EmbedFrame
+              key={`${movie.id}-${jump.n}`}
+              src={withStartTime(movie.embedUrl, jump.t)}
+              title={movie.displayTitle}
+              kind="video"
+              movie={movie}
+              externalUrl={movie.movieUrl}
+              onExpandedChange={onExpandedChange}
+              onMark={() => setComposerOpen(true)}
+              status={statusText}
+              overlay={composerOpen && (
+                <MomentComposer dark movie={movie} moments={moments} tags={tags} allTags={allTags} onSave={saveMoment} onClose={() => setComposerOpen(false)} />
+              )}
+              renderBar={({ expand, expanded: isFull }) => (
+                <>
+                  <div className="flex h-14 items-center gap-2 border-b border-line px-3 sm:px-0">
+                    <button type="button" onClick={() => setComposerOpen((v) => !v)} aria-expanded={composerOpen}
+                      className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-amber-500 px-4 text-sm font-semibold text-stone-950 hover:bg-amber-400">
+                      <BookmarkPlus className="size-4" aria-hidden /> סמן רגע
+                    </button>
+                    <p role="status" aria-live="polite" className="min-w-0 flex-1 truncate text-sm font-medium text-accent-ink">
+                      {statusText && <bdi>{statusText}</bdi>}
+                    </p>
+                    <button type="button" onClick={expand} className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-surface-2 px-3 text-sm font-semibold hover:bg-line">
+                      <Maximize2 className="size-4" aria-hidden /> מסך מלא
+                    </button>
+                  </div>
+                  {composerOpen && !isFull && (
+                    <MomentComposer movie={movie} moments={moments} tags={tags} allTags={allTags} onSave={saveMoment} onClose={() => setComposerOpen(false)} autoFocus />
+                  )}
+                </>
+              )}
+            />
           ) : (
             <div className="flex aspect-video flex-col items-center justify-center gap-2 bg-surface-2 text-center text-muted sm:rounded-xl">
               <VideoOff className="size-8 text-amber-500" aria-hidden />
@@ -248,11 +307,6 @@ export default function VideoModal({
         </div>
 
         <div className="space-y-4 px-4 pb-8 pt-4 sm:mx-auto sm:max-w-[calc(56dvh*16/9+3rem)] sm:px-6" style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
-          {jumpNote && (
-            <p className="animate-fade-in text-sm font-medium text-accent-ink" role="status">
-              ▶ הסרטון ינוגן מ-<span dir="ltr" className="tabular-nums">{jumpNote}</span> — לחצו על ניגון
-            </p>
-          )}
           <div>
             <h2 id="movie-modal-title" className="font-display text-2xl font-bold leading-[1.15] sm:text-[28px]">{movie.displayTitle}</h2>
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
@@ -273,6 +327,18 @@ export default function VideoModal({
               </a>
             )}
           </div>
+
+          {movie.embedUrl && (
+            <MomentList
+              moments={moments}
+              searchTerms={searchTerms}
+              onJump={jumpTo}
+              onUpdate={(from, to) => onUpdateMoment(movie.id, from, to)}
+              onDelete={(m) => onRemoveMoment(movie.id, m.tag, m.t)}
+              onRestore={(m) => onAddTag(movie.id, m.tag, m.t)}
+              onMark={() => { setComposerOpen(true); scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' }) }}
+            />
+          )}
 
           {/* Tabs */}
           <div role="tablist" aria-label="פרטי הסרט" onKeyDown={onTabKey} className="no-scrollbar -mx-4 flex gap-1 overflow-x-auto border-b border-line px-4 sm:mx-0 sm:px-0">
@@ -304,7 +370,7 @@ export default function VideoModal({
               <div className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-2">
                 <section className="min-w-0">
                   <h3 className="mb-3 flex items-center gap-2 font-semibold"><Tags className="size-4 text-amber-500" aria-hidden /> תגיות</h3>
-                  <TagEditor movie={movie} tags={tags} moments={moments} allTags={allTags} onAdd={onAddTag} onRemove={onRemoveTag} onTagClick={onTagClick} onJump={jumpTo} />
+                  <TagEditor movie={movie} tags={tags} moments={moments} allTags={allTags} onAdd={onAddTag} onRemove={onRemoveTag} onTagClick={onTagClick} />
                   <p className="mt-3 text-xs text-muted">לחיצה על תגית מציגה את כל הסרטים שמתויגים בה.</p>
                 </section>
                 <NotesEditor key={movie.id} movieId={movie.id} note={note} onSave={onSaveNote} />

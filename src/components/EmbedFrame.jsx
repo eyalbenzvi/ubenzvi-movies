@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { AlertCircle, ExternalLink, Loader2, Maximize2, Minimize2, RefreshCw } from 'lucide-react'
+import { AlertCircle, BookmarkPlus, ExternalLink, Loader2, Maximize2, Minimize2, RefreshCw } from 'lucide-react'
 import Thumbnail from './Thumbnail.jsx'
 
 const LOAD_TIMEOUT_MS = 15000
@@ -15,7 +15,7 @@ const exitFs = () => { if (fsElement()) (document.exitFullscreen || document.web
  *   viewport overlay, e.g. iPhone). Back / Esc / "חזרה לאפליקציה" return to the modal.
  * - Shows the poster while loading and a friendly fallback if nothing loads.
  */
-export default function EmbedFrame({ src, title, kind, movie, externalUrl, onExpandedChange }) {
+export default function EmbedFrame({ src, title, kind, movie, externalUrl, onExpandedChange, renderBar, overlay, onMark, status }) {
   const [loaded, setLoaded] = useState(false)
   const [timedOut, setTimedOut] = useState(false)
   const [attempt, setAttempt] = useState(0)
@@ -71,6 +71,7 @@ export default function EmbedFrame({ src, title, kind, movie, externalUrl, onExp
     const onFsChange = () => { if (!fsElement()) collapse() }
     const onKey = (e) => {
       // While enlarged, the modal must not react to keys (Esc closes full screen, arrows do nothing)
+      if (e.target?.closest?.('[data-moment-composer]')) return // Esc there closes the panel, not full screen
       if (e.key === 'Escape') { e.stopImmediatePropagation(); e.preventDefault(); collapse() }
       else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') e.stopImmediatePropagation()
     }
@@ -95,15 +96,22 @@ export default function EmbedFrame({ src, title, kind, movie, externalUrl, onExp
     : `relative overflow-hidden ${isDoc ? 'h-[calc(100dvh-16rem)] min-h-80 rounded-xl border border-line bg-surface ' : 'aspect-video bg-black sm:rounded-xl'}`
 
   return (
+    <>
     <div ref={wrapRef} className={frameBox}>
       {expanded && (
-        <div className="flex shrink-0 items-center justify-between gap-2 bg-stone-950 px-3 py-1.5 text-stone-100" style={{ paddingTop: 'max(0.375rem, env(safe-area-inset-top))' }}>
-          <span className="truncate text-sm font-medium">{title}</span>
-          <button type="button" onClick={collapse} className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-amber-500 px-3 text-sm font-semibold text-stone-950 hover:bg-amber-400">
-            <Minimize2 className="size-4" aria-hidden /> חזרה לאפליקציה
+        <div className="flex shrink-0 items-center gap-2 bg-stone-950 px-3 py-1.5 text-stone-100" style={{ paddingTop: 'max(0.375rem, env(safe-area-inset-top))' }}>
+          <span className="min-w-0 flex-1 truncate text-sm font-medium" role="status" aria-live="polite">{status || title}</span>
+          {onMark && (
+            <button type="button" onClick={onMark} className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-white/15 px-3 text-sm font-semibold hover:bg-white/25">
+              <BookmarkPlus className="size-4" aria-hidden /> סמן רגע
+            </button>
+          )}
+          <button type="button" onClick={collapse} aria-label="חזרה לאפליקציה" className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-amber-500 px-3 text-sm font-semibold text-stone-950 hover:bg-amber-400">
+            <Minimize2 className="size-4" aria-hidden /> חזרה
           </button>
         </div>
       )}
+      {expanded && overlay}
       <div className={expanded ? 'relative flex-1' : 'absolute inset-0'}>
         {!loaded && (
           <div className="absolute inset-0">
@@ -148,7 +156,7 @@ export default function EmbedFrame({ src, title, kind, movie, externalUrl, onExp
           // Covers Drive's own "open in Drive" pop-out button (top-right of the player)
           <div className="absolute right-0 top-0 z-10 size-16" aria-hidden />
         )}
-        {!expanded && (
+        {!expanded && !renderBar && (
           <button
             type="button"
             onClick={expand}
@@ -159,5 +167,7 @@ export default function EmbedFrame({ src, title, kind, movie, externalUrl, onExp
         )}
       </div>
     </div>
+    {renderBar?.({ expand, expanded })}
+    </>
   )
 }

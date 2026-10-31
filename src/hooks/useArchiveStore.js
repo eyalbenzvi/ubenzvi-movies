@@ -88,6 +88,30 @@ export function useArchiveStore() {
     })
   }, [setMoments])
 
+  /**
+   * Change one moment (time and/or label). If the label changed and no other moment of this
+   * movie still uses the old label, the old tag is dropped from the movie too (typo fixes).
+   */
+  const updateMoment = useCallback((movieId, from, to) => {
+    const label = cleanTag(to.tag)
+    if (!label || !Number.isFinite(to.t)) return
+    const sec = Math.floor(to.t)
+    const others = (moments[movieId] || []).filter((m) => !(m.tag === from.tag && m.t === from.t))
+    const dropOld = label !== from.tag && !others.some((m) => m.tag === from.tag)
+    setMoments((prev) => {
+      const rest = (prev[movieId] || []).filter((m) => !(m.tag === from.tag && m.t === from.t))
+      const next = rest.some((m) => m.tag === label && m.t === sec) ? rest : [...rest, { tag: label, t: sec }]
+      return { ...prev, [movieId]: next.sort((a, b) => a.t - b.t) }
+    })
+    ensureInLibrary(label)
+    setTagsByMovie((prev) => {
+      let cur = prev[movieId] || []
+      if (dropOld) cur = cur.filter((t) => t !== from.tag)
+      if (!cur.includes(label)) cur = [...cur, label]
+      return { ...prev, [movieId]: cur }
+    })
+  }, [moments, setMoments, setTagsByMovie, ensureInLibrary])
+
   /** Apply fn(list) → list to every movie's moments, dropping empty lists. */
   const mapMoments = useCallback((fn) => {
     setMoments((prev) => {
@@ -245,7 +269,7 @@ export function useArchiveStore() {
 
   return {
     tagsByMovie, allTags, notes, docText, favorites, recent, markViewed, moments,
-    addTag, removeTag, removeMoment, createTag, renameTag, deleteTag,
+    addTag, removeTag, removeMoment, updateMoment, createTag, renameTag, deleteTag,
     setNote, setDocContent, toggleFavorite,
     exportData, importData,
   }

@@ -18,6 +18,10 @@ Built with **React 19 + Vite + Tailwind CSS v4 + Lucide icons**, deployed to **G
   (niqqud, quotes, final letters, maqaf, a prefix letter), `"quoted phrases"`, highlighted excerpts.
 - **Years from the documents** — tapes without a year in their title get it from the dated segments.
 - **Filters & sort** — decade/year, tags, "has מה בקלטת", favorites, video/audio; a bottom sheet on phones.
+- **Moments (timestamped tags)** — "סמן רגע" under the player (and in full screen): type the time the
+  player shows (2210 → 22:10) and what happens. Moments are listed like chapters, editable, searchable,
+  and open the video at that time (`#/movie/<id>?t=1330`). The app can't read Google's player position,
+  so the time is typed by the user.
 - **Tags, notes, favorites, history** in `localStorage`, with JSON backup export/import (validated).
 - **Dark (default) & light themes**, keyboard & screen-reader friendly, respects reduced motion.
 

@@ -61,6 +61,11 @@ export default function App() {
   const navigate = useNavigate()
   const routeMatch = matchPath('/movie/:id', location.pathname)
   const openMovie = routeMatch ? moviesById[routeMatch.params.id] : null
+  // Deep link / search result to a moment: #/movie/<id>?t=1330
+  const startAt = (() => {
+    const t = Number(new URLSearchParams(location.search).get('t'))
+    return Number.isInteger(t) && t > 0 && t <= 86400 ? t : 0
+  })()
 
   // Unknown deep link → back to the catalog with a message
   useEffect(() => {
@@ -101,8 +106,9 @@ export default function App() {
   const index = useMemo(() => buildIndex(movies, (m) => ({
     tags: tagsByMovie[m.id] || EMPTY,
     notes: notes[m.id] || '',
+    moments: store.moments[m.id] || EMPTY,
     docText: m.docId ? [docIndex[m.docId]?.text, docText[m.docId]].filter(Boolean).join('\n').replace(DOC_HEADER, '').trim() : '',
-  })), [tagsByMovie, notes, docText])
+  })), [tagsByMovie, notes, docText, store.moments])
 
   const searchResults = useMemo(() => search(index, deferredQuery), [index, deferredQuery])
   const searchTerms = useMemo(() => parseQuery(deferredQuery), [deferredQuery])
@@ -165,7 +171,7 @@ export default function App() {
   const showHome = view === 'rows' && !deferredQuery.trim() && !hasActiveFilters
 
   // ---- Modal navigation --------------------------------------------------
-  const open = useCallback((m) => navigate(`/movie/${m.id}`, { state: { fromApp: true } }), [navigate])
+  const open = useCallback((m, t) => navigate(`/movie/${m.id}${Number.isFinite(t) ? `?t=${Math.floor(t)}` : ''}`, { state: { fromApp: true } }), [navigate])
   const close = useCallback(() => {
     if (location.state?.fromApp) navigate(-1)
     else navigate('/', { replace: true })
@@ -334,6 +340,9 @@ export default function App() {
           searchTerms={searchTerms}
           tags={tagsByMovie[openMovie.id] || EMPTY}
           moments={store.moments[openMovie.id] || EMPTY}
+          startAt={startAt}
+          onUpdateMoment={store.updateMoment}
+          onRemoveMoment={store.removeMoment}
           allTags={store.allTags}
           onAddTag={store.addTag}
           onRemoveTag={store.removeTag}

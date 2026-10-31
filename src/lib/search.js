@@ -160,7 +160,9 @@ export function search(index, query) {
     } else if (fields.has('doc')) {
       snippet = { field: 'doc', text: makeSnippet(entry.raw.docText, terms) }
     }
-    results.set(entry.movie.id, { score, fields, snippet, terms })
+    // Timestamped tags that match → the result can open the video at that moment
+    const moments = (entry.raw.moments || []).filter((mo) => terms.some((t) => termIn(normalize(mo.tag), t)))
+    results.set(entry.movie.id, { score, fields, snippet, terms, moments })
   }
   return results
 }
