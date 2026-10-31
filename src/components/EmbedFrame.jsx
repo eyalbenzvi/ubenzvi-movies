@@ -15,7 +15,7 @@ const exitFs = () => { if (fsElement()) (document.exitFullscreen || document.web
  *   viewport overlay, e.g. iPhone). Back / Esc / "חזרה לאפליקציה" return to the modal.
  * - Shows the poster while loading and a friendly fallback if nothing loads.
  */
-export default function EmbedFrame({ src, title, kind, movie, externalUrl, onExpandedChange, renderBar, overlay, onMark, status }) {
+export default function EmbedFrame({ src, title, kind, movie, externalUrl, onExpandedChange, renderBar, overlay, onMark, status, nativeSrc, startAt = 0, onVideo, onNativeError }) {
   const [loaded, setLoaded] = useState(false)
   const [timedOut, setTimedOut] = useState(false)
   const [attempt, setAttempt] = useState(0)
@@ -28,7 +28,7 @@ export default function EmbedFrame({ src, title, kind, movie, externalUrl, onExp
     setTimedOut(false)
     const t = setTimeout(() => setTimedOut(true), LOAD_TIMEOUT_MS)
     return () => clearTimeout(t)
-  }, [src, attempt])
+  }, [src, nativeSrc, attempt])
 
   useEffect(() => { onExpandedChange?.(expanded) }, [expanded, onExpandedChange])
 
@@ -142,17 +142,33 @@ export default function EmbedFrame({ src, title, kind, movie, externalUrl, onExp
             </div>
           </div>
         )}
+        {nativeSrc ? (
+          // Signed in: our own player, streamed via the Drive API under the user's identity (public/sw.js)
+          <video
+            key={`${nativeSrc}#${attempt}`}
+            ref={(el) => onVideo?.(el)}
+            src={nativeSrc}
+            controls
+            playsInline
+            preload="metadata"
+            title={title}
+            onLoadedMetadata={(e) => { if (startAt) e.currentTarget.currentTime = startAt; setLoaded(true) }}
+            onError={() => onNativeError?.()}
+            className={`absolute inset-0 size-full bg-black transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+          />
+        ) : (
         <iframe
-          key={`${src}#${attempt}`}
-          src={src}
-          title={title}
-          onLoad={() => setLoaded(true)}
-          sandbox="allow-scripts allow-same-origin allow-presentation"
-          allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-          referrerPolicy="strict-origin-when-cross-origin"
-          className={`absolute inset-0 size-full border-0 transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
-        />
-        {!isDoc && loaded && (
+            key={`${src}#${attempt}`}
+            src={src}
+            title={title}
+            onLoad={() => setLoaded(true)}
+            sandbox="allow-scripts allow-same-origin allow-presentation"
+            allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+            referrerPolicy="strict-origin-when-cross-origin"
+            className={`absolute inset-0 size-full border-0 transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+          />
+        )}
+        {!isDoc && loaded && !nativeSrc && (
           // Covers Drive's own "open in Drive" pop-out button (top-right of the player)
           <div className="absolute right-0 top-0 z-10 size-16" aria-hidden />
         )}

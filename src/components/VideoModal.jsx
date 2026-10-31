@@ -10,6 +10,7 @@ import Thumbnail from './Thumbnail.jsx'
 import { yearLabel } from './MovieCard.jsx'
 import { parseSegments } from '../lib/docParse.js'
 import { formatTime, withStartTime } from '../lib/time.js'
+import { useGoogleAuth } from '../hooks/useGoogleAuth.jsx'
 
 const DATE_RE = /(\(?\d{1,2}[/.]\d{1,2}[/.]\d{2,4}\)?|\(?\d{1,2}[/.]\d{2,4}\)?|(?<!\d)(?:19|20)\d{2}(?:-(?:19|20)\d{2})?(?!\d))/
 
@@ -176,12 +177,26 @@ export default function VideoModal({
   const scrollRef = useRef(null)
   const [barNote, setBarNote] = useState(null) // { kind: 'jump' | 'saved', label?, t }
   const [composerOpen, setComposerOpen] = useState(false)
+  const auth = useGoogleAuth()
+  const [nativeFailed, setNativeFailed] = useState(false)
+  const videoRef = useRef(null)
+  // Signed in with Google → our own player (streams under the user's identity, time is readable)
+  const useNative = auth.canStream && !!movie.streamUrl && !nativeFailed
 
   const jumpTo = useCallback((t) => {
-    setJump((j) => ({ t, n: j.n + 1 }))
-    setBarNote({ kind: 'jump', t })
+    const v = videoRef.current
+    if (useNative && v) {
+      v.currentTime = t
+      v.play?.().catch(() => {})
+      setBarNote({ kind: 'jump-native', t })
+    } else {
+      setJump((j) => ({ t, n: j.n + 1 }))
+      setBarNote({ kind: 'jump', t })
+    }
     scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
-  }, [])
+  }, [useNative])
+
+  const getNow = useNative ? () => (videoRef.current ? Math.floor(videoRef.current.currentTime) : null) : undefined
 
   useEffect(() => {
     if (firstRun.current) {
@@ -192,6 +207,7 @@ export default function VideoModal({
     setJump((j) => ({ t: startAt || 0, n: j.n + 1 }))
     setBarNote(startAt ? { kind: 'jump', t: startAt } : null)
     setComposerOpen(false)
+    setNativeFailed(false)
     setTab((t) => (tabs.some((x) => x.id === t) ? t : tabs[0].id))
     scrollRef.current?.scrollTo({ top: 0 })
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -212,7 +228,9 @@ export default function VideoModal({
 
   const statusText = barNote?.kind === 'saved'
     ? `✓ נשמר: ${barNote.label} · ${formatTime(barNote.t)}`
-    : barNote?.kind === 'jump' ? `▶ ${formatTime(barNote.t)} · לחצו ניגון` : ''
+    : barNote?.kind === 'jump' ? `▶ ${formatTime(barNote.t)} · לחצו ניגון`
+    : barNote?.kind === 'jump-native' ? `▶ מנגן מ-${formatTime(barNote.t)}`
+    : barNote?.kind === 'fallback' ? 'לא ניתן לנגן דרך החשבון — עברנו לנגן של Google' : ''
 
   // ← / → move between movies (RTL: left = next). Ignored while typing or on the tab list.
   useEffect(() => {
@@ -265,22 +283,26 @@ export default function VideoModal({
           <div className="sm:mx-auto sm:max-w-[calc(56dvh*16/9)]">
           {movie.embedUrl ? (
             <EmbedFrame
-              key={`${movie.id}-${jump.n}`}
+              key={useNative ? `${movie.id}-native` : `${movie.id}-${jump.n}`}
               src={withStartTime(movie.embedUrl, jump.t)}
+              nativeSrc={useNative ? movie.streamUrl : null}
+              startAt={jump.t}
+              onVideo={(el) => { videoRef.current = el }}
+              onNativeError={() => { setNativeFailed(true); setBarNote({ kind: 'fallback' }) }}
               title={movie.displayTitle}
               kind="video"
               movie={movie}
               externalUrl={movie.movieUrl}
               onExpandedChange={onExpandedChange}
-              onMark={() => setComposerOpen(true)}
+              onMark={() => { videoRef.current?.pause?.(); setComposerOpen(true) }}
               status={statusText}
               overlay={composerOpen && (
-                <MomentComposer dark movie={movie} moments={moments} tags={tags} allTags={allTags} onSave={saveMoment} onClose={() => setComposerOpen(false)} />
+                <MomentComposer dark movie={movie} moments={moments} tags={tags} allTags={allTags} onSave={saveMoment} onClose={() => setComposerOpen(false)} getNow={getNow} />
               )}
               renderBar={({ expand, expanded: isFull }) => (
                 <>
                   <div className="flex h-14 items-center gap-2 border-b border-line px-3 sm:px-0">
-                    <button type="button" onClick={() => setComposerOpen((v) => !v)} aria-expanded={composerOpen}
+                    <button type="button" onClick={() => { if (!composerOpen) videoRef.current?.pause?.(); setComposerOpen((v) => !v) }} aria-expanded={composerOpen}
                       className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-amber-500 px-4 text-sm font-semibold text-stone-950 ring-1 ring-black/10 hover:bg-amber-400 dark:ring-0">
                       <BookmarkPlus className="size-4" aria-hidden /> סמן רגע
                     </button>
@@ -291,8 +313,18 @@ export default function VideoModal({
                       <Maximize2 className="size-4" aria-hidden /> מסך מלא
                     </button>
                   </div>
+                  {auth.enabled && !useNative && (auth.status === 'signed-out' || auth.status === 'expired') && (
+                    <div className="flex items-center gap-2 border-b border-line bg-surface-2/60 px-3 py-2 text-sm sm:px-0 sm:bg-transparent">
+                      <span className="min-w-0 flex-1 text-muted">
+                        {auth.status === 'expired' ? 'החיבור לגוגל פג.' : 'הנגן מבקש להתחבר לגוגל?'}
+                      </span>
+                      <button type="button" onClick={auth.signIn} className="h-9 shrink-0 rounded-full border border-line-strong bg-surface px-3 text-sm font-semibold text-ink hover:bg-surface-2">
+                        {auth.status === 'expired' ? 'התחברות מחדש' : 'התחברות עם Google'}
+                      </button>
+                    </div>
+                  )}
                   {composerOpen && !isFull && (
-                    <MomentComposer movie={movie} moments={moments} tags={tags} allTags={allTags} onSave={saveMoment} onClose={() => setComposerOpen(false)} autoFocus />
+                    <MomentComposer movie={movie} moments={moments} tags={tags} allTags={allTags} onSave={saveMoment} onClose={() => setComposerOpen(false)} autoFocus getNow={getNow} />
                   )}
                 </>
               )}

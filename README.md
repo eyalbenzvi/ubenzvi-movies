@@ -45,6 +45,28 @@ The site is served at `https://<user>.github.io/<repo>/`.
 The build uses a relative base (`./`) and a HashRouter (`#/movie/<id>`), so refresh/deep links never 404,
 and it also works on a custom domain (add `public/CNAME`).
 
+## Google sign-in (recommended — fixes "limit has been hit for viewers who aren't signed in")
+
+On iPhone every browser is WebKit, which blocks Google's login cookies inside the embedded Drive player,
+so the embedded player treats everyone as anonymous and hits Drive's anonymous-viewing limit.
+With "התחברות עם Google" the app streams the video itself through the Drive API under the user's
+identity (`public/sw.js`, a service worker that adds the user's token and passes seeking ranges through),
+in its own `<video>` player — which also lets "סמן רגע" read the current time automatically and jump
+to moments instantly. Without sign-in the embedded Drive player is used as before.
+
+One-time setup (Google Cloud Console, free):
+1. https://console.cloud.google.com → create a project (e.g. "Uri movies").
+2. *APIs & Services → Library* → enable **Google Drive API**.
+3. *OAuth consent screen* → External → app name, your email → Scopes: add `.../auth/drive.readonly`
+   → **Test users**: add the Google accounts of the family members (up to 100). Keep it in "Testing".
+4. *Credentials → Create credentials → OAuth client ID* → type **Web application** →
+   *Authorized JavaScript origins*: `https://eyalbenzvi.github.io` (and `http://localhost:5173` for dev).
+5. Put the client ID in `src/config.js` (`GOOGLE_CLIENT_ID`) — it is public by design — and push.
+
+Notes: because the app is unverified, Google shows a "Google hasn't verified this app" screen the first
+time (Advanced → continue). The token lasts one hour, is kept only in memory/sessionStorage, and the
+app only reads files. The user must have access to the video in Drive.
+
 ## Updating the "מה בקלטת" content
 
 ```bash

@@ -1,5 +1,5 @@
 import { useId, useMemo, useRef, useState } from 'react'
-import { X } from 'lucide-react'
+import { RotateCcw, X } from 'lucide-react'
 import TimeInput from './TimeInput.jsx'
 import { normalize } from '../lib/search.js'
 import { formatTime, parseTimeInput } from '../lib/time.js'
@@ -9,8 +9,10 @@ import { formatTime, parseTimeInput } from '../lib/time.js'
  * Rendered under the bar in the small player, and inside the full-screen overlay (`dark`).
  * The player is never covered or reloaded while it is open.
  */
-export default function MomentComposer({ movie, moments, tags, allTags, onSave, onClose, dark = false, autoFocus = false }) {
-  const [digits, setDigits] = useState('')
+export default function MomentComposer({ movie, moments, tags, allTags, onSave, onClose, dark = false, autoFocus = false, getNow }) {
+  // With our own player (signed in) the time is read from it; otherwise the user types it
+  const secondsToDigits = (sec) => formatTime(sec).replace(/\D/g, '').replace(/^0+(?=\d)/, '')
+  const [digits, setDigits] = useState(() => { const now = getNow?.(); return now != null ? secondsToDigits(now) : '' })
   const [label, setLabel] = useState('')
   const [error, setError] = useState(null)
   const [focused, setFocused] = useState(false)
@@ -57,8 +59,15 @@ export default function MomentComposer({ movie, moments, tags, allTags, onSave, 
           describedBy={hintId}
           onEnter={() => labelRef.current?.focus()}
           dark={dark}
-          autoFocus={autoFocus}
+          autoFocus={autoFocus && !getNow}
         />
+        {getNow && (
+          <button type="button" onClick={() => { const n = getNow(); if (n != null) { setDigits(secondsToDigits(n)); setError(null) } }}
+            className={`flex size-12 shrink-0 items-center justify-center rounded-xl border ${dark ? 'border-stone-600 text-stone-200 hover:bg-stone-800' : 'border-line text-muted hover:bg-surface-2'}`}
+            aria-label="עדכן לזמן הנוכחי בנגן" title="הזמן הנוכחי בנגן">
+            <RotateCcw className="size-4" aria-hidden />
+          </button>
+        )}
         <label className="relative flex min-w-0 flex-1 flex-col gap-1">
           <span className={`text-xs font-medium ${dark ? 'text-stone-300' : 'text-muted'}`}>מה רואים כאן?</span>
           <input
@@ -102,8 +111,8 @@ export default function MomentComposer({ movie, moments, tags, allTags, onSave, 
       )}
 
       <p id={hintId} role={error ? 'alert' : undefined} className={`text-xs leading-relaxed ${error ? 'font-semibold text-rose-500' : `landscape:max-sm:hidden ${dark ? 'text-stone-300' : 'text-muted'}`}`}>
-        {error?.msg || <>הזמן מופיע בתחתית הנגן משמאל — המספר הראשון (למשל <span dir="ltr">22:10</span> מתוך <span dir="ltr">22:10 / 59:00</span>). לא רואים? הקישו פעם על הסרטון.</>}
-        {!error && digits && <> · יישמר כ-<span dir="ltr" className="font-semibold tabular-nums">{formatTime(parseTimeInput(digits).sec ?? 0)}</span></>}
+        {error?.msg || (getNow ? <>הזמן נלקח מהנגן. אפשר לתקן אותו ידנית.</> : null) || <>הזמן מופיע בתחתית הנגן משמאל — המספר הראשון (למשל <span dir="ltr">22:10</span> מתוך <span dir="ltr">22:10 / 59:00</span>). לא רואים? הקישו פעם על הסרטון.</>}
+        {!error && digits && !getNow && <> · יישמר כ-<span dir="ltr" className="font-semibold tabular-nums">{formatTime(parseTimeInput(digits).sec ?? 0)}</span></>}
       </p>
     </div>
   )

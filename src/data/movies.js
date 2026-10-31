@@ -67,6 +67,13 @@ export function toEmbedUrl(url) {
   return withResourceKey(`https://docs.google.com/${g.kind}/d/${g.id}/preview`, g.resourceKey)
 }
 
+/** Same-origin URL handled by public/sw.js (Drive API stream with the signed-in user's token). */
+export function toStreamUrl(url) {
+  const g = parseGoogleUrl(url)
+  if (!g || g.kind !== 'file') return null
+  return `./drive-stream/${g.id}${g.resourceKey ? `?rk=${encodeURIComponent(g.resourceKey)}` : ''}`
+}
+
 export function toThumbnailUrl(url) {
   const g = parseGoogleUrl(url)
   if (!g || g.kind !== 'file') return null
@@ -154,6 +161,7 @@ export const movies = rawCatalog.map((row, index) => {
     decade: year ? Math.floor(year / 10) * 10 : null,
     movieUrl: safeGoogleUrl(row.movieUrl),
     embedUrl: toEmbedUrl(row.movieUrl),
+    streamUrl: toStreamUrl(row.movieUrl),
     thumbnailUrl: toThumbnailUrl(row.movieUrl),
     detailsUrl: safeGoogleUrl(row.detailsUrl),
     detailsEmbedUrl: toEmbedUrl(row.detailsUrl),

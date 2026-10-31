@@ -1,5 +1,6 @@
-import { forwardRef } from 'react'
-import { CassetteTape, Moon, Search, Sun, Tags, X } from 'lucide-react'
+import { forwardRef, useEffect, useRef, useState } from 'react'
+import { CassetteTape, LogIn, LogOut, Moon, Search, Sun, Tags, X } from 'lucide-react'
+import { useGoogleAuth } from '../hooks/useGoogleAuth.jsx'
 import { useIsPhone } from '../hooks/useMediaQuery.js'
 import { useHideOnScroll } from '../hooks/useScrollDirection.js'
 
@@ -24,6 +25,7 @@ const Header = forwardRef(function Header({ query, onQueryChange, theme, onToggl
         </button>
 
         <div className="ms-auto flex items-center sm:order-last">
+          <AccountButton />
           <button type="button" onClick={onOpenTagManager} className="inline-flex h-11 items-center gap-1.5 rounded-xl px-2.5 text-sm font-medium text-muted transition hover:bg-line hover:text-accent-ink" aria-label="תגיות וגיבוי">
             <Tags className="size-5" aria-hidden /> <span className="hidden xl:inline">תגיות וגיבוי</span>
           </button>
@@ -58,5 +60,52 @@ const Header = forwardRef(function Header({ query, onQueryChange, theme, onToggl
     </header>
   )
 })
+
+/** Google account: sign in (streams videos under the user's identity) / avatar menu with sign out. */
+function AccountButton() {
+  const auth = useGoogleAuth()
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  useEffect(() => {
+    if (!open) return
+    const onDoc = (e) => { if (!ref.current?.contains(e.target)) setOpen(false) }
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('pointerdown', onDoc)
+    document.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('pointerdown', onDoc); document.removeEventListener('keydown', onKey) }
+  }, [open])
+  if (!auth.enabled) return null
+
+  if (auth.status !== 'signed-in') {
+    return (
+      <button type="button" onClick={auth.signIn} className="inline-flex h-11 items-center gap-1.5 rounded-xl px-2.5 text-sm font-medium text-muted transition hover:bg-line hover:text-ink" aria-label="התחברות עם Google" title={auth.error || 'התחברות עם Google'}>
+        <LogIn className="size-5" aria-hidden /> <span className="hidden lg:inline">{auth.status === 'expired' ? 'התחברות מחדש' : 'התחברות'}</span>
+      </button>
+    )
+  }
+  const u = auth.user || {}
+  return (
+    <div className="relative" ref={ref}>
+      <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} aria-haspopup="menu" aria-label={`החשבון של ${u.name || 'Google'}`}
+        className="flex size-11 items-center justify-center rounded-full hover:bg-line">
+        {u.picture
+          ? <img src={u.picture} alt="" referrerPolicy="no-referrer" className="size-8 rounded-full ring-2 ring-amber-500/70" />
+          : <span className="grid size-8 place-items-center rounded-full bg-amber-500 text-sm font-bold text-stone-950">{(u.name || '?').slice(0, 1)}</span>}
+      </button>
+      {open && (
+        <div role="menu" className="absolute end-0 top-full z-40 mt-1 w-64 animate-fade-in rounded-xl border border-line bg-surface p-2 shadow-xl">
+          <div className="px-2 py-1.5">
+            <p className="truncate font-semibold">{u.name}</p>
+            <p className="truncate text-sm text-muted" dir="ltr">{u.email}</p>
+            <p className="mt-1 text-xs text-muted">הסרטונים מנוגנים דרך החשבון הזה.</p>
+          </div>
+          <button type="button" role="menuitem" onClick={() => { setOpen(false); auth.signOut() }} className="flex h-11 w-full items-center gap-2 rounded-lg px-2 text-sm font-medium hover:bg-surface-2">
+            <LogOut className="size-4" aria-hidden /> התנתקות
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default Header
