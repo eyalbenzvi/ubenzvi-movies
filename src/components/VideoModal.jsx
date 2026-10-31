@@ -6,6 +6,7 @@ import Sheet from './Sheet.jsx'
 import TagEditor from './TagEditor.jsx'
 import MomentComposer from './MomentComposer.jsx'
 import MomentList from './MomentList.jsx'
+import GoogleButton from './GoogleButton.jsx'
 import Thumbnail from './Thumbnail.jsx'
 import { yearLabel } from './MovieCard.jsx'
 import { parseSegments } from '../lib/docParse.js'
@@ -318,9 +319,7 @@ export default function VideoModal({
                       <span className="min-w-0 flex-1 text-muted">
                         {auth.status === 'expired' ? 'החיבור לגוגל פג.' : 'הנגן מבקש להתחבר לגוגל?'}
                       </span>
-                      <button type="button" onClick={auth.signIn} className="h-9 shrink-0 rounded-full border border-line-strong bg-surface px-3 text-sm font-semibold text-ink hover:bg-surface-2">
-                        {auth.status === 'expired' ? 'התחברות מחדש' : 'התחברות עם Google'}
-                      </button>
+                      <GoogleButton onClick={auth.signIn} label={auth.status === 'expired' ? 'התחברות מחדש' : 'התחברות עם Google'} />
                     </div>
                   )}
                   {composerOpen && !isFull && (

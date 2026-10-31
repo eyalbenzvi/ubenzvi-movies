@@ -1,5 +1,6 @@
 import { forwardRef, useEffect, useRef, useState } from 'react'
-import { CassetteTape, LogIn, LogOut, Moon, Search, Sun, Tags, X } from 'lucide-react'
+import { CassetteTape, LogOut, Moon, Search, Sun, Tags, X } from 'lucide-react'
+import GoogleButton from './GoogleButton.jsx'
 import { useGoogleAuth } from '../hooks/useGoogleAuth.jsx'
 import { useIsPhone } from '../hooks/useMediaQuery.js'
 import { useHideOnScroll } from '../hooks/useScrollDirection.js'
@@ -77,10 +78,12 @@ function AccountButton() {
   if (!auth.enabled) return null
 
   if (auth.status !== 'signed-in') {
+    const label = auth.status === 'expired' ? 'התחברות מחדש עם Google' : 'התחברות עם Google'
     return (
-      <button type="button" onClick={auth.signIn} className="inline-flex h-11 items-center gap-1.5 rounded-xl px-2.5 text-sm font-medium text-muted transition hover:bg-line hover:text-ink" aria-label="התחברות עם Google" title={auth.error || 'התחברות עם Google'}>
-        <LogIn className="size-5" aria-hidden /> <span className="hidden lg:inline">{auth.status === 'expired' ? 'התחברות מחדש' : 'התחברות'}</span>
-      </button>
+      <span className="me-1 flex items-center" title={auth.error || label}>
+        <span className="flex lg:hidden"><GoogleButton onClick={auth.signIn} label={label} compact /></span>
+        <span className="hidden lg:flex"><GoogleButton onClick={auth.signIn} label={label} /></span>
+      </span>
     )
   }
   const u = auth.user || {}
