@@ -299,7 +299,7 @@ export default function App() {
         ) : visible.length === 0 ? (
           <div className="flex animate-fade-in flex-col items-center gap-3 py-20 text-center">
             <span className="grid size-24 place-items-center rounded-full bg-amber-500/10"><CassetteTape className="size-14 text-amber-500/70" strokeWidth={1.5} aria-hidden /></span>
-            <p className="font-display text-xl font-bold">
+            <p className="font-display text-xl font-semibold">
               {filters.onlyFavorites && !favorites.length ? 'עוד אין מועדפים' : deferredQuery.trim() ? <>לא נמצא דבר עבור ״<bdi>{deferredQuery.trim()}</bdi>״</> : 'אין סרטים שמתאימים לסינון'}
             </p>
             <p className="max-w-sm text-sm text-muted">

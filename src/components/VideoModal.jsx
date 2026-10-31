@@ -281,7 +281,7 @@ export default function VideoModal({
                 <>
                   <div className="flex h-14 items-center gap-2 border-b border-line px-3 sm:px-0">
                     <button type="button" onClick={() => setComposerOpen((v) => !v)} aria-expanded={composerOpen}
-                      className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-amber-500 px-4 text-sm font-semibold text-stone-950 hover:bg-amber-400">
+                      className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-amber-500 px-4 text-sm font-semibold text-stone-950 ring-1 ring-black/10 hover:bg-amber-400 dark:ring-0">
                       <BookmarkPlus className="size-4" aria-hidden /> סמן רגע
                     </button>
                     <p role="status" aria-live="polite" className="min-w-0 flex-1 truncate text-sm font-medium text-accent-ink">
@@ -308,7 +308,7 @@ export default function VideoModal({
 
         <div className="space-y-4 px-4 pb-8 pt-4 sm:mx-auto sm:max-w-[calc(56dvh*16/9+3rem)] sm:px-6" style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
           <div>
-            <h2 id="movie-modal-title" className="font-display text-2xl font-bold leading-[1.15] sm:text-[28px]">{movie.displayTitle}</h2>
+            <h2 id="movie-modal-title" className="font-display text-2xl font-semibold leading-[1.2] sm:text-[28px]">{movie.displayTitle}</h2>
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
               {year && <span className="tabular-nums">{year}</span>}
               {movie.part && <span>חלק {movie.part}{parts.length > 1 ? ` מתוך ${parts.length}` : ''}</span>}
@@ -318,7 +318,7 @@ export default function VideoModal({
 
           {/* Actions */}
           <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-            <button type="button" onClick={() => onToggleFavorite(movie.id)} aria-pressed={isFavorite} className={`inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm font-semibold transition ${isFavorite ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400' : 'bg-amber-500 text-stone-950 hover:bg-amber-400'}`}>
+            <button type="button" onClick={() => onToggleFavorite(movie.id)} aria-pressed={isFavorite} className={`inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm font-semibold transition ${isFavorite ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400' : 'bg-surface-2 text-ink hover:bg-line'}`}>
               <Heart className={`size-4 ${isFavorite ? 'fill-current' : ''}`} aria-hidden /> {isFavorite ? 'במועדפים' : 'הוספה למועדפים'}
             </button>
             {movie.movieUrl && (

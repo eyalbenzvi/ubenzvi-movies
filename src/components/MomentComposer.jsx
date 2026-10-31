@@ -94,7 +94,7 @@ export default function MomentComposer({ movie, moments, tags, allTags, onSave, 
         <div className="no-scrollbar -mx-3 flex gap-1.5 overflow-x-auto px-3 landscape:max-sm:hidden">
           {chips.map((c) => (
             <button key={c} type="button" onClick={() => { setLabel(c); setError(null) }}
-              className={`inline-flex h-9 shrink-0 items-center rounded-full border px-3 text-sm ${label === c ? 'border-amber-500 bg-amber-500 text-stone-950' : dark ? 'border-stone-600 text-stone-200 hover:border-amber-500' : 'border-line text-ink hover:border-amber-500'}`}>
+              className={`inline-flex h-9 shrink-0 items-center rounded-full border px-3 text-sm ${label === c ? (dark ? 'border-white bg-white text-stone-950' : 'border-ink bg-ink text-paper') : dark ? 'border-stone-600 text-stone-200 hover:border-amber-500' : 'border-line text-ink hover:border-amber-500'}`}>
               {c}
             </button>
           ))}

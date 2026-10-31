@@ -14,11 +14,11 @@ const Header = forwardRef(function Header({ query, onQueryChange, theme, onToggl
     >
       <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2 sm:flex-nowrap sm:py-3 lg:px-8">
         <button type="button" onClick={onHome} className="flex min-w-0 items-center gap-2.5 text-start" aria-label="לעמוד הבית">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent text-on-accent shadow-md shadow-amber-600/20 sm:size-10">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent text-on-accent sm:size-10">
             <CassetteTape className="size-5" aria-hidden />
           </span>
           <span className="min-w-0 leading-tight">
-            <span className="block truncate font-display text-lg font-bold sm:text-xl">הסרטים של אורי</span>
+            <span className="block truncate font-display text-lg font-semibold sm:text-xl">הסרטים של אורי</span>
             <span className="hidden text-xs text-muted lg:block">ארכיון הווידאו המשפחתי · {total} סרטים</span>
           </span>
         </button>

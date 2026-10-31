@@ -73,7 +73,7 @@ export default function TagManager({ store, activeTags, onTagClick, onRenameTag,
     <Sheet onClose={close} labelledBy="tag-manager-title">
       <header className="flex items-center justify-between gap-2 px-5 pb-3 pt-1 sm:pt-4" data-sheet-drag>
         <div className="min-w-0">
-          <h2 id="tag-manager-title" className="flex items-center gap-2 font-display text-xl font-bold"><Tags className="size-5 text-amber-500" aria-hidden /> תגיות וגיבוי</h2>
+          <h2 id="tag-manager-title" className="flex items-center gap-2 font-display text-xl font-semibold"><Tags className="size-5 text-amber-500" aria-hidden /> תגיות וגיבוי</h2>
           <p className="text-sm text-muted">{allTags.length} תגיות · {Object.keys(notes).length} הערות · {favorites.length} מועדפים</p>
         </div>
         <button type="button" onClick={close} className={`${iconBtn} rounded-full hover:bg-surface-2 `} aria-label="סגור"><X className="size-5" aria-hidden /></button>
@@ -148,7 +148,7 @@ export default function TagManager({ store, activeTags, onTagClick, onRenameTag,
             <div className="flex rounded-xl border border-line-strong p-1" role="radiogroup" aria-label="אופן הייבוא">
               {[['merge', 'מיזוג עם הקיים'], ['replace', 'החלפת הכל']].map(([id, label]) => (
                 <button key={id} type="button" role="radio" aria-checked={importMode === id} onClick={() => setImportMode(id)}
-                  className={`h-10 flex-1 rounded-lg text-sm font-semibold transition ${importMode === id ? 'bg-amber-500 text-stone-950' : 'text-muted'}`}>
+                  className={`h-10 flex-1 rounded-lg text-sm font-semibold transition ${importMode === id ? 'bg-ink text-paper' : 'text-muted'}`}>
                   {label}
                 </button>
               ))}

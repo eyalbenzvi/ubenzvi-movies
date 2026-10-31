@@ -6,21 +6,33 @@
 @custom-variant can-hover (@media (hover: hover) and (pointer: fine));
 
 @theme {
-  --font-sans: "Heebo", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
-  --font-display: "Frank Ruhl Libre", "Heebo", serif;
+  /* Tailwind amber scale remapped to a soft "gold" so every existing amber-* utility follows the new accent */
+  --color-amber-50: #fefaec;
+  --color-amber-100: #fcf0c8;
+  --color-amber-200: #f9e29a;
+  --color-amber-300: #f6d272;
+  --color-amber-400: #f4c95f;
+  --color-amber-500: #f2c14e;
+  --color-amber-600: #c99a2c;
+  --color-amber-700: #866510;
+  --color-amber-800: #6b5112;
+  --color-amber-900: #584313;
+  --color-amber-950: #332608;
+  --font-sans: "Noto Sans Hebrew", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  --font-display: "Noto Serif Hebrew", "Noto Sans Hebrew", serif;
   /* Semantic color tokens — light values here, dark overrides on .dark below (contrast-validated) */
-  --color-paper: #faf7f2;
+  --color-paper: #f7f5f2;
   --color-surface: #ffffff;
-  --color-surface-2: #f3eee7;
-  --color-line: #e4dcd2;
-  --color-line-strong: #8c7d70;
-  --color-ink: #1c1612;
-  --color-muted: #5c5048;
-  --color-subtle: #78716c;
-  --color-accent: #f59e0b;
-  --color-on-accent: #1a0f05;
-  --color-accent-ink: #b45309;
-  --color-focus: #b45309;
+  --color-surface-2: #efebe6;
+  --color-line: #e2ddd6;
+  --color-line-strong: #8a837b;
+  --color-ink: #1b1917;
+  --color-muted: #57514b;
+  --color-subtle: #736c65;
+  --color-accent: #f2c14e;
+  --color-on-accent: #1c1505;
+  --color-accent-ink: #81600f;
+  --color-focus: #81600f;
 
   --animate-fade-in: fade-in 0.2s ease-out both;
   --animate-pop-in: pop-in 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both;
@@ -42,16 +54,16 @@
 @keyframes shimmer { from { background-position: 150% 0 } to { background-position: -50% 0 } }
 
 .dark {
-  --color-paper: #120e0b;
-  --color-surface: #1a1512;
-  --color-surface-2: #241d18;
-  --color-line: #3a302a;
-  --color-line-strong: #6b5d52;
-  --color-ink: #f5f0eb;
-  --color-muted: #b3a89e;
-  --color-subtle: #8f8379;
-  --color-accent-ink: #fcd34d;
-  --color-focus: #f59e0b;
+  --color-paper: #0e0d0c;
+  --color-surface: #171615;
+  --color-surface-2: #22201e;
+  --color-line: #312e2b;
+  --color-line-strong: #6b655f;
+  --color-ink: #f3f1ee;
+  --color-muted: #b1aba4;
+  --color-subtle: #8d8780;
+  --color-accent-ink: #f2c14e;
+  --color-focus: #f2c14e;
 }
 
 :root { color-scheme: light; }
@@ -63,11 +75,10 @@ body {
   font-family: var(--font-sans);
 }
 
-/* Subtle warm vignette for the cinematic dark theme */
+/* Barely-there gold glow at the top of the dark theme */
 .dark body {
   background-image:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(245, 158, 11, 0.1), transparent 60%),
-    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(190, 18, 60, 0.05), transparent 60%);
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(242, 193, 78, 0.05), transparent 60%);
   background-attachment: fixed;
 }
 

@@ -32,8 +32,8 @@ function Pill({ active, onClick, children, title, className = '' }) {
       aria-pressed={active}
       className={`inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-sm font-medium transition-colors duration-200 sm:h-9 ${
         active
-          ? 'border-amber-500 bg-amber-500 text-stone-950'
-          : 'border-line bg-surface text-muted hover:border-amber-500/70 hover:text-accent-ink'
+          ? 'border-ink bg-ink text-paper'
+          : 'border-line bg-surface text-muted hover:border-line-strong hover:text-ink'
       } ${className}`}
     >
       {children}
@@ -41,7 +41,7 @@ function Pill({ active, onClick, children, title, className = '' }) {
   )
 }
 
-const Count = ({ n, active }) => <span className={`tabular-nums ${active ? 'text-stone-800' : 'text-muted'}`}>{n}</span>
+const Count = ({ n, active }) => <span className={`tabular-nums ${active ? 'opacity-70' : 'text-muted'}`}>{n}</span>
 
 function DecadePills({ filters, setFilter, decadeCounts }) {
   const { decade } = filters
@@ -127,7 +127,7 @@ function ViewSwitch({ view, setFilter, isHome = true }) {
           aria-pressed={view === id}
           aria-label={`תצוגת ${label}`}
           title={label}
-          className={`flex size-9 items-center justify-center rounded-full transition sm:size-8 ${view === id ? 'bg-amber-500 text-stone-950' : 'text-muted hover:text-ink'}`}
+          className={`flex size-9 items-center justify-center rounded-full transition sm:size-8 ${view === id ? 'bg-ink text-paper' : 'text-muted hover:text-ink'}`}
         >
           <Icon className="size-4" aria-hidden />
         </button>

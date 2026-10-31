@@ -27,7 +27,7 @@ export default function MovieCard({ movie, match, tags, isFavorite, watched, onO
         <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/0 via-40%" />
         <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-black/30 to-transparent" />
 
-        <span className="absolute inset-0 m-auto flex size-12 scale-90 items-center justify-center rounded-full bg-amber-500/95 text-stone-950 opacity-0 shadow-lg shadow-black/40 transition-all duration-300 can-hover:group-hover:scale-100 can-hover:group-hover:opacity-100">
+        <span className="absolute inset-0 m-auto flex size-12 scale-90 items-center justify-center rounded-full bg-white/95 text-stone-950 opacity-0 shadow-lg shadow-black/40 transition-all duration-300 can-hover:group-hover:scale-100 can-hover:group-hover:opacity-100">
           <Play className="size-5 fill-current" aria-hidden />
         </span>
 
@@ -35,7 +35,7 @@ export default function MovieCard({ movie, match, tags, isFavorite, watched, onO
           <span className="absolute bottom-1.5 start-1.5 rounded-md bg-black/70 px-1.5 py-0.5 text-xs font-semibold tabular-nums text-white">{year}</span>
         )}
         {movie.detailsUrl && (
-          <span className="absolute start-1.5 top-1.5 inline-flex items-center gap-1 rounded-md bg-amber-500 px-1.5 py-0.5 text-xs font-semibold text-stone-950" title='יש פירוט "מה בקלטת"'>
+          <span className="absolute start-1.5 top-1.5 inline-flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-xs font-semibold text-amber-200 backdrop-blur-sm" title='יש פירוט "מה בקלטת"'>
             <FileText className="size-3" aria-hidden /><span className={compact ? 'sr-only' : 'max-sm:sr-only'}>מה בקלטת</span>
           </span>
         )}

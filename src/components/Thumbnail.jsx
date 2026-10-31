@@ -29,7 +29,7 @@ export default function Thumbnail({ movie, className = '', iconClass = 'size-8',
             {label && <span className="line-clamp-2 font-display text-sm text-amber-50/90">{movie.displayTitle}</span>}
           </div>
           {state === 'loading' && <div className="skeleton absolute inset-0" aria-hidden />}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1.5 bg-[repeating-linear-gradient(90deg,#f59e0b_0_14px,#be123c_14px_28px,#0f766e_28px_42px)] opacity-70" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1.5 bg-[repeating-linear-gradient(90deg,#f2c14e_0_14px,#be123c_14px_28px,#0f766e_28px_42px)] opacity-70" />
         </div>
       )}
       {movie.thumbnailUrl && state !== 'failed' && (

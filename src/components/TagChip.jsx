@@ -6,7 +6,7 @@ import { Clock, Tag, X } from 'lucide-react'
  */
 export default function TagChip({ name, active = false, count, onClick, onRemove, momentCount }) {
   const tone = active
-    ? 'border-amber-500 bg-amber-500 text-stone-950'
+    ? 'border-ink bg-ink text-paper'
     : 'border-line-strong bg-surface text-muted hover:border-amber-500 hover:text-accent-ink   dark:hover:border-amber-500/70 '
   return (
     <span className={`inline-flex min-h-9 max-w-full flex-wrap items-center rounded-full border text-sm font-medium transition-colors ${tone}`}>
@@ -24,7 +24,7 @@ export default function TagChip({ name, active = false, count, onClick, onRemove
             <Clock className="size-3" aria-hidden />{momentCount}
           </span>
         )}
-        {count != null && <span className={`tabular-nums ${active ? 'text-stone-800' : 'text-muted'}`}>{count}</span>}
+        {count != null && <span className={`tabular-nums ${active ? 'opacity-70' : 'text-muted'}`}>{count}</span>}
       </button>
       {onRemove && (
         <button
