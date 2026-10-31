@@ -7,7 +7,7 @@ import { normalize } from '../lib/search.js'
 export default function TagEditor({ movie, tags, allTags, onAdd, onRemove, onTagClick }) {
   const [value, setValue] = useState('')
   const [open, setOpen] = useState(false)
-  const [highlighted, setHighlighted] = useState(0)
+  const [highlighted, setHighlighted] = useState(-1) // -1 = the typed text itself
   const inputRef = useRef(null)
 
   const options = useMemo(() => {
@@ -28,21 +28,21 @@ export default function TagEditor({ movie, tags, allTags, onAdd, onRemove, onTag
     if (!t) return
     onAdd(movie.id, t)
     setValue('')
-    setHighlighted(0)
+    setHighlighted(-1)
     inputRef.current?.focus()
   }
 
   const onKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault()
-      commit(open && options[highlighted] && normalize(options[highlighted]) !== normalize(value) && value ? options[highlighted] : value)
+      commit(open && highlighted >= 0 && options[highlighted] ? options[highlighted] : value)
     } else if (e.key === 'ArrowDown') {
       e.preventDefault(); setOpen(true); setHighlighted((h) => Math.min(h + 1, options.length - 1))
     } else if (e.key === 'ArrowUp') {
-      e.preventDefault(); setHighlighted((h) => Math.max(h - 1, 0))
+      e.preventDefault(); setHighlighted((h) => Math.max(h - 1, -1))
     } else if (e.key === 'Backspace' && !value && tags.length) {
       onRemove(movie.id, tags[tags.length - 1])
-    } else if (e.key === 'Escape' && open) {
+    } else if (e.key === 'Escape' && open && options.length > 0) {
       e.stopPropagation(); setOpen(false)
     }
   }
@@ -50,24 +50,24 @@ export default function TagEditor({ movie, tags, allTags, onAdd, onRemove, onTag
   return (
     <div className="space-y-3">
       <div className="flex min-h-[2.5rem] flex-wrap items-center gap-1.5">
-        {tags.length === 0 && <span className="text-sm text-stone-500 dark:text-stone-400">אין עדיין תגיות לסרט הזה.</span>}
+        {tags.length === 0 && <span className="text-sm text-stone-500 dark:text-stone-400">עוד אין תגיות לסרט הזה.</span>}
         {tags.map((t) => (
           <TagChip key={t} name={t} onClick={onTagClick} onRemove={(name) => onRemove(movie.id, name)} />
         ))}
       </div>
 
       <div className="relative">
-        <div className="flex gap-2">
+        <div className="flex min-w-0 gap-2">
           <input
             ref={inputRef}
             value={value}
-            onChange={(e) => { setValue(e.target.value); setOpen(true); setHighlighted(0) }}
+            onChange={(e) => { setValue(e.target.value); setOpen(true); setHighlighted(-1) }}
             onFocus={() => setOpen(true)}
             onBlur={() => setTimeout(() => setOpen(false), 150)}
             onKeyDown={onKeyDown}
             placeholder="הוסף תגית (לדוגמה: ילדות, טיול, מצחיק)…"
             maxLength={40}
-            className="min-w-0 flex-1 rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/30 dark:border-stone-700 dark:bg-stone-900"
+            className="h-11 min-w-0 flex-1 rounded-xl border border-stone-300 bg-white px-3 text-base sm:text-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/30 dark:border-stone-700 dark:bg-stone-900"
             aria-label="תגית חדשה"
             role="combobox"
             aria-expanded={open && options.length > 0}
@@ -77,7 +77,7 @@ export default function TagEditor({ movie, tags, allTags, onAdd, onRemove, onTag
             type="button"
             onClick={() => commit()}
             disabled={!value.trim()}
-            className="inline-flex items-center gap-1 rounded-xl bg-amber-500 px-3 py-2 text-sm font-semibold text-stone-950 transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex h-11 shrink-0 items-center gap-1 rounded-xl bg-amber-500 px-4 text-sm font-semibold text-stone-950 transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:bg-stone-200 disabled:text-stone-500 dark:disabled:bg-stone-800 dark:disabled:text-stone-500"
           >
             <Plus className="size-4" /> הוסף
           </button>
@@ -90,7 +90,7 @@ export default function TagEditor({ movie, tags, allTags, onAdd, onRemove, onTag
                   type="button"
                   onMouseDown={(e) => { e.preventDefault(); commit(o) }}
                   onMouseEnter={() => setHighlighted(i)}
-                  className={`w-full rounded-lg px-3 py-1.5 text-start text-sm ${i === highlighted ? 'bg-amber-500/15 text-amber-800 dark:text-amber-200' : ''}`}
+                  className={`w-full rounded-lg px-3 py-2.5 text-start text-sm ${i === highlighted ? 'bg-amber-500/15 text-amber-800 dark:text-amber-200' : ''}`}
                 >
                   {o}
                 </button>
@@ -101,14 +101,14 @@ export default function TagEditor({ movie, tags, allTags, onAdd, onRemove, onTag
       </div>
 
       {suggestions.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5 text-xs">
+        <div className="flex flex-wrap items-center gap-2 text-sm">
           <span className="inline-flex items-center gap-1 text-stone-500 dark:text-stone-400"><Sparkles className="size-3.5 text-amber-500" /> הצעות:</span>
           {suggestions.map((s) => (
             <button
               key={s}
               type="button"
               onClick={() => commit(s)}
-              className="rounded-full border border-dashed border-amber-500/60 px-2.5 py-0.5 text-amber-700 transition hover:bg-amber-500/10 dark:text-amber-300"
+              className="inline-flex h-9 items-center rounded-full border border-dashed border-amber-500/70 px-3 text-sm text-amber-800 transition hover:bg-amber-500/10 dark:text-amber-300"
             >
               + {s}
             </button>

@@ -10,13 +10,13 @@
 
 const REMOVE = /[֑-ׇ"'`״׳‏‎]/
 const FINALS = { ך: 'כ', ם: 'מ', ן: 'נ', ף: 'פ', ץ: 'צ' }
-const PUNCT = /[\s.,;:!?()[\]{}\-_/\\|+*=<>~#&%^@·–—]/
+const PUNCT = /[\s.,;:!?()[\]{}\-_/\\|+*=<>~#&%^@·–—\u05BE]/
 const PREFIXES = 'והבלמשכ'
 
 /** Normalize a single char; returns '' (dropped), ' ' (separator) or the folded char. */
 function foldChar(ch) {
+  if (PUNCT.test(ch)) return ' ' // checked first: maqaf (U+05BE) sits inside the niqqud range
   if (REMOVE.test(ch)) return ''
-  if (PUNCT.test(ch)) return ' '
   return FINALS[ch] || ch.toLowerCase()
 }
 
@@ -26,7 +26,7 @@ export function normalize(text) {
   return out.replace(/\s+/g, ' ').trim()
 }
 
-/** Normalize while keeping a map from normalized index → original index. */
+/** Normalize (identically to `normalize`) while keeping a map from normalized index → original index. */
 function normalizeWithMap(text) {
   let out = ''
   const map = []
@@ -34,6 +34,7 @@ function normalizeWithMap(text) {
   for (let i = 0; i < str.length; i++) {
     const f = foldChar(str[i])
     if (!f) continue
+    if (f === ' ' && (out === '' || out.endsWith(' '))) continue // collapse whitespace like normalize()
     out += f
     map.push(i)
   }

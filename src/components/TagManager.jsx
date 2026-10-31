@@ -1,32 +1,34 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { Check, Download, Pencil, Plus, Tags, Trash2, Upload, X } from 'lucide-react'
+import Sheet from './Sheet.jsx'
+import { useBackClose } from '../hooks/useBackClose.js'
+import { MAX_IMPORT_BYTES } from '../hooks/useArchiveStore.js'
 
-/** Global tag management: create / rename / delete tags, plus JSON backup export & import. */
-export default function TagManager({ store, activeTags, onTagClick, onClose }) {
-  const { allTags, createTag, renameTag, deleteTag, exportData, importData, notes, docText, favorites } = store
+const btn = 'inline-flex h-11 items-center justify-center gap-1.5 rounded-xl px-4 text-sm font-semibold transition'
+const primary = `${btn} bg-amber-500 text-stone-950 hover:bg-amber-400 disabled:bg-stone-200 disabled:text-stone-500 dark:disabled:bg-stone-800`
+const secondary = `${btn} border border-stone-300 hover:border-amber-500 hover:text-amber-800 dark:border-stone-700 dark:hover:text-amber-300`
+const iconBtn = 'flex size-11 shrink-0 items-center justify-center rounded-xl text-stone-500 transition'
+
+/** Global tag management + JSON backup. */
+export default function TagManager({ store, activeTags, onTagClick, onRenameTag, onDeleteTag, onClose }) {
+  const close = useBackClose(onClose)
+  const { allTags, createTag, exportData, importData, notes, favorites } = store
   const [newTag, setNewTag] = useState('')
   const [editing, setEditing] = useState(null)
   const [editValue, setEditValue] = useState('')
+  const [confirmDelete, setConfirmDelete] = useState(null)
   const [importMode, setImportMode] = useState('merge')
+  const [pendingReplace, setPendingReplace] = useState(null) // parsed backup awaiting confirmation
   const [message, setMessage] = useState(null)
   const fileRef = useRef(null)
 
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape' && !editing) onClose() }
-    window.addEventListener('keydown', onKey)
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = prev }
-  }, [onClose, editing])
-
   const flash = (type, text) => {
     setMessage({ type, text })
-    setTimeout(() => setMessage(null), 4000)
+    setTimeout(() => setMessage(null), 5000)
   }
 
   const handleExport = () => {
-    const data = exportData()
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const blob = new Blob([JSON.stringify(exportData(), null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -35,126 +37,140 @@ export default function TagManager({ store, activeTags, onTagClick, onClose }) {
     a.click()
     a.remove()
     setTimeout(() => URL.revokeObjectURL(url), 1000)
-    flash('ok', 'קובץ הגיבוי הורד בהצלחה')
+    flash('ok', 'קובץ הגיבוי הורד')
   }
 
-  const handleImport = async (e) => {
-    const file = e.target.files?.[0]
-    e.target.value = ''
-    if (!file) return
+  const runImport = (data, mode) => {
     try {
-      const data = JSON.parse(await file.text())
-      if (importMode === 'replace' && !window.confirm('הייבוא יחליף את כל התגיות וההערות הקיימות. להמשיך?')) return
-      const res = importData(data, importMode)
-      flash('ok', `יובאו ${res.tags} תגיות עבור ${res.movies} סרטים`)
+      const res = importData(data, mode)
+      flash('ok', `יובאו ${res.tags} תגיות, ${res.notes} הערות ו-${res.favorites} מועדפים`)
     } catch (err) {
-      flash('error', err instanceof SyntaxError ? 'הקובץ אינו JSON תקין' : err.message)
+      flash('error', err.message)
     }
   }
 
-  const startEdit = (name) => { setEditing(name); setEditValue(name) }
-  const saveEdit = () => { renameTag(editing, editValue); setEditing(null) }
+  const handleFile = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (file.size > MAX_IMPORT_BYTES) return flash('error', 'הקובץ גדול מדי (עד 5MB)')
+    let data
+    try {
+      data = JSON.parse(await file.text())
+    } catch {
+      return flash('error', 'הקובץ אינו קובץ גיבוי תקין')
+    }
+    if (importMode === 'replace') setPendingReplace(data)
+    else runImport(data, 'merge')
+  }
 
-  const assigned = allTags.reduce((s, t) => s + t.count, 0)
+  const saveEdit = () => {
+    onRenameTag(editing, editValue)
+    setEditing(null)
+  }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
-      <div className="absolute inset-0 animate-fade-in bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div role="dialog" aria-modal="true" aria-labelledby="tag-manager-title" className="relative flex max-h-[92dvh] w-full max-w-2xl animate-pop-in flex-col overflow-hidden rounded-t-3xl border border-stone-200 bg-white shadow-2xl dark:border-stone-800 dark:bg-stone-900 sm:rounded-3xl">
-        <header className="flex items-center justify-between border-b border-stone-200 px-5 py-4 dark:border-stone-800">
+    <Sheet onClose={close} labelledBy="tag-manager-title">
+      <header className="flex items-center justify-between gap-2 px-5 pb-3 pt-1 sm:pt-4" data-sheet-drag>
+        <div className="min-w-0">
+          <h2 id="tag-manager-title" className="flex items-center gap-2 font-display text-xl font-bold"><Tags className="size-5 text-amber-500" aria-hidden /> תגיות וגיבוי</h2>
+          <p className="text-sm text-stone-500 dark:text-stone-400">{allTags.length} תגיות · {Object.keys(notes).length} הערות · {favorites.length} מועדפים</p>
+        </div>
+        <button type="button" onClick={close} className={`${iconBtn} rounded-full hover:bg-stone-100 dark:hover:bg-stone-800`} aria-label="סגור"><X className="size-5" aria-hidden /></button>
+      </header>
+
+      <div className="scrollbar-thin flex-1 space-y-6 overflow-y-auto overscroll-contain px-5 pb-6" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
+        <form onSubmit={(e) => { e.preventDefault(); if (createTag(newTag)) { flash('ok', `נוצרה התגית "${newTag.trim()}"`); setNewTag('') } }} className="flex min-w-0 gap-2">
+          <input
+            value={newTag}
+            onChange={(e) => setNewTag(e.target.value)}
+            placeholder="שם תגית חדשה…"
+            maxLength={40}
+            aria-label="שם תגית חדשה"
+            className="h-11 min-w-0 flex-1 rounded-xl border border-stone-300 bg-white px-3 text-base outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/30 sm:text-sm dark:border-stone-700 dark:bg-stone-950/50"
+          />
+          <button type="submit" disabled={!newTag.trim()} className={`${primary} shrink-0`}><Plus className="size-4" aria-hidden /> צור</button>
+        </form>
+
+        <ul className="divide-y divide-stone-200 rounded-xl border border-stone-200 dark:divide-stone-800 dark:border-stone-800">
+          {allTags.length === 0 && <li className="p-4 text-center text-sm text-stone-500">אין תגיות עדיין.</li>}
+          {allTags.map(({ name, count }) => (
+            <li key={name} className="flex min-w-0 items-center gap-1 px-2 py-1">
+              {editing === name ? (
+                <form onSubmit={(e) => { e.preventDefault(); saveEdit() }} className="flex w-full min-w-0 items-center gap-1">
+                  <input
+                    autoFocus
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); e.preventDefault(); setEditing(null) } }}
+                    maxLength={40}
+                    aria-label={`שם חדש לתגית ${name}`}
+                    className="h-10 min-w-0 flex-1 rounded-lg border border-amber-500 bg-white px-2 text-base outline-none sm:text-sm dark:bg-stone-950"
+                  />
+                  <button type="submit" className={`${iconBtn} text-emerald-600 hover:bg-emerald-500/10`} aria-label="שמור"><Check className="size-5" aria-hidden /></button>
+                  <button type="button" onClick={() => setEditing(null)} className={`${iconBtn} hover:bg-stone-500/10`} aria-label="ביטול"><X className="size-5" aria-hidden /></button>
+                </form>
+              ) : confirmDelete === name ? (
+                <div className="flex w-full min-w-0 flex-wrap items-center gap-2 py-1">
+                  <span className="min-w-0 flex-1 text-sm">למחוק את <b>{name}</b>{count ? ` מ-${count} סרטים` : ''}?</span>
+                  <button type="button" onClick={() => { onDeleteTag(name); setConfirmDelete(null) }} className={`${btn} h-10 bg-rose-600 text-white hover:bg-rose-500`}>מחק</button>
+                  <button type="button" onClick={() => setConfirmDelete(null)} className={`${btn} h-10 hover:bg-stone-100 dark:hover:bg-stone-800`}>ביטול</button>
+                </div>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => { onTagClick(name); close() }}
+                    className={`flex h-11 min-w-0 flex-1 items-center truncate rounded-lg px-2 text-start text-[15px] font-medium hover:text-amber-700 dark:hover:text-amber-300 ${activeTags.includes(name) ? 'text-amber-700 dark:text-amber-300' : ''}`}
+                    title="הצג את כל הסרטים עם התגית"
+                  >
+                    {name}
+                  </button>
+                  <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs tabular-nums text-stone-600 dark:bg-stone-800 dark:text-stone-300">{count}</span>
+                  <button type="button" onClick={() => { setEditing(name); setEditValue(name) }} className={`${iconBtn} hover:bg-stone-500/10 hover:text-amber-700`} aria-label={`שנה שם לתגית ${name}`}><Pencil className="size-4" aria-hidden /></button>
+                  <button type="button" onClick={() => (count ? setConfirmDelete(name) : onDeleteTag(name))} className={`${iconBtn} hover:bg-rose-500/10 hover:text-rose-600`} aria-label={`מחק את התגית ${name}`}><Trash2 className="size-4" aria-hidden /></button>
+                </>
+              )}
+            </li>
+          ))}
+        </ul>
+
+        <section className="space-y-3 rounded-xl border border-stone-200 bg-stone-50 p-4 dark:border-stone-800 dark:bg-stone-950/40">
           <div>
-            <h2 id="tag-manager-title" className="flex items-center gap-2 font-display text-xl font-bold"><Tags className="size-5 text-amber-500" /> ניהול תגיות</h2>
-            <p className="text-xs text-stone-500 dark:text-stone-400">
-              {allTags.length} תגיות · {assigned} שיוכים · {Object.keys(notes).length} הערות · {favorites.length} מועדפים · {Object.keys(docText).length} מסמכים שהוזנו
+            <h3 className="font-semibold">גיבוי ושחזור</h3>
+            <p className="mt-1 text-sm leading-relaxed text-stone-600 dark:text-stone-400">
+              התגיות, ההערות והמועדפים נשמרים רק בדפדפן הזה. כדאי לייצא קובץ גיבוי מדי פעם, וכך גם מעבירים אותם למכשיר אחר.
             </p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-full p-2 text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800" aria-label="סגור"><X className="size-5" /></button>
-        </header>
+          <button type="button" onClick={handleExport} className={`${primary} w-full sm:w-auto`}><Download className="size-4" aria-hidden /> ייצוא קובץ גיבוי</button>
 
-        <div className="scrollbar-thin flex-1 space-y-6 overflow-y-auto p-5">
-          <form
-            onSubmit={(e) => { e.preventDefault(); if (createTag(newTag)) setNewTag('') }}
-            className="flex gap-2"
-          >
-            <input
-              value={newTag}
-              onChange={(e) => setNewTag(e.target.value)}
-              placeholder="שם תגית חדשה…"
-              maxLength={40}
-              className="min-w-0 flex-1 rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/30 dark:border-stone-700 dark:bg-stone-950/50"
-            />
-            <button type="submit" disabled={!newTag.trim()} className="inline-flex items-center gap-1 rounded-xl bg-amber-500 px-3 py-2 text-sm font-semibold text-stone-950 hover:bg-amber-400 disabled:opacity-40">
-              <Plus className="size-4" /> צור
-            </button>
-          </form>
-
-          <ul className="divide-y divide-stone-200 rounded-xl border border-stone-200 dark:divide-stone-800 dark:border-stone-800">
-            {allTags.length === 0 && <li className="p-4 text-center text-sm text-stone-500">אין תגיות עדיין.</li>}
-            {allTags.map(({ name, count }) => (
-              <li key={name} className="flex items-center gap-2 px-3 py-2">
-                {editing === name ? (
-                  <form onSubmit={(e) => { e.preventDefault(); saveEdit() }} className="flex flex-1 gap-2">
-                    <input
-                      autoFocus
-                      value={editValue}
-                      onChange={(e) => setEditValue(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); setEditing(null) } }}
-                      maxLength={40}
-                      className="min-w-0 flex-1 rounded-lg border border-amber-500 bg-white px-2 py-1 text-sm outline-none dark:bg-stone-950"
-                    />
-                    <button type="submit" className="rounded-lg p-1.5 text-emerald-600 hover:bg-emerald-500/10" aria-label="שמור"><Check className="size-4" /></button>
-                    <button type="button" onClick={() => setEditing(null)} className="rounded-lg p-1.5 text-stone-500 hover:bg-stone-500/10" aria-label="ביטול"><X className="size-4" /></button>
-                  </form>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => { onTagClick(name); onClose() }}
-                      className={`flex-1 truncate text-start text-sm font-medium hover:text-amber-600 ${activeTags.includes(name) ? 'text-amber-600 dark:text-amber-300' : ''}`}
-                      title="הצג את כל הסרטים עם התגית"
-                    >
-                      {name}
-                    </button>
-                    <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs tabular-nums text-stone-600 dark:bg-stone-800 dark:text-stone-300">{count}</span>
-                    <button type="button" onClick={() => startEdit(name)} className="rounded-lg p-1.5 text-stone-500 hover:bg-stone-500/10 hover:text-amber-600" aria-label={`שנה שם ${name}`}><Pencil className="size-4" /></button>
-                    <button
-                      type="button"
-                      onClick={() => { if (count === 0 || window.confirm(`למחוק את התגית "${name}" מ-${count} סרטים?`)) deleteTag(name) }}
-                      className="rounded-lg p-1.5 text-stone-500 hover:bg-rose-500/10 hover:text-rose-600"
-                      aria-label={`מחק ${name}`}
-                    >
-                      <Trash2 className="size-4" />
-                    </button>
-                  </>
-                )}
-              </li>
-            ))}
-          </ul>
-
-          <section className="rounded-xl border border-stone-200 bg-stone-50 p-4 dark:border-stone-800 dark:bg-stone-950/40">
-            <h3 className="mb-1 font-semibold">גיבוי ושחזור</h3>
-            <p className="mb-3 text-xs leading-relaxed text-stone-500 dark:text-stone-400">
-              כל התגיות, ההערות, המועדפים ותוכן "מה בקלטת" שהוזן נשמרים בדפדפן הזה בלבד. ייצאו קובץ JSON כדי לגבות או להעביר למכשיר אחר.
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
-              <button type="button" onClick={handleExport} className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500 px-3 py-2 text-sm font-semibold text-stone-950 hover:bg-amber-400">
-                <Download className="size-4" /> ייצוא JSON
-              </button>
-              <button type="button" onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 px-3 py-2 text-sm font-semibold hover:border-amber-500 hover:text-amber-700 dark:border-stone-700 dark:hover:text-amber-300">
-                <Upload className="size-4" /> ייבוא JSON
-              </button>
-              <select value={importMode} onChange={(e) => setImportMode(e.target.value)} className="rounded-xl border border-stone-300 bg-white px-2 py-2 text-sm dark:border-stone-700 dark:bg-stone-900" aria-label="אופן הייבוא">
-                <option value="merge">מיזוג עם הקיים</option>
-                <option value="replace">החלפת הכל</option>
-              </select>
-              <input ref={fileRef} type="file" accept="application/json,.json" className="hidden" onChange={handleImport} />
+          <div className="space-y-2 border-t border-stone-200 pt-3 dark:border-stone-800">
+            <div className="flex rounded-xl border border-stone-300 p-1 dark:border-stone-700" role="radiogroup" aria-label="אופן הייבוא">
+              {[['merge', 'מיזוג עם הקיים'], ['replace', 'החלפת הכל']].map(([id, label]) => (
+                <button key={id} type="button" role="radio" aria-checked={importMode === id} onClick={() => setImportMode(id)}
+                  className={`h-10 flex-1 rounded-lg text-sm font-semibold transition ${importMode === id ? 'bg-amber-500 text-stone-950' : 'text-stone-600 dark:text-stone-300'}`}>
+                  {label}
+                </button>
+              ))}
             </div>
-            {message && (
-              <p className={`mt-3 animate-fade-in text-sm font-medium ${message.type === 'ok' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>{message.text}</p>
-            )}
-          </section>
-        </div>
+            <button type="button" onClick={() => fileRef.current?.click()} className={`${secondary} w-full sm:w-auto`}><Upload className="size-4" aria-hidden /> ייבוא מקובץ גיבוי</button>
+            <input ref={fileRef} type="file" accept="application/json,.json" className="hidden" onChange={handleFile} />
+          </div>
+
+          {pendingReplace && (
+            <div className="animate-fade-in space-y-2 rounded-xl border border-rose-500/40 bg-rose-500/10 p-3 text-sm" role="alert">
+              <p>הייבוא <b>יחליף</b> את כל התגיות, ההערות והמועדפים הקיימים. להמשיך?</p>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => { runImport(pendingReplace, 'replace'); setPendingReplace(null) }} className={`${btn} h-10 bg-rose-600 text-white hover:bg-rose-500`}>כן, להחליף</button>
+                <button type="button" onClick={() => setPendingReplace(null)} className={`${btn} h-10 hover:bg-stone-100 dark:hover:bg-stone-800`}>ביטול</button>
+              </div>
+            </div>
+          )}
+          {message && (
+            <p className={`animate-fade-in text-sm font-medium ${message.type === 'ok' ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`} role="status">{message.text}</p>
+          )}
+        </section>
       </div>
-    </div>
+    </Sheet>
   )
 }

@@ -1,382 +1,302 @@
-import { useEffect, useRef, useState } from 'react'
-import {
-  AlertCircle, Calendar, ChevronLeft, ChevronRight, ExternalLink, FileText, Heart, Loader2,
-  Maximize2, Minimize2, Pencil, Play, Save, StickyNote, Tags, X,
-} from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Check, ChevronLeft, ChevronRight, ExternalLink, FileText, Heart, Layers, Pencil, StickyNote, Tags, VideoOff, X } from 'lucide-react'
+import EmbedFrame from './EmbedFrame.jsx'
+import Highlight from './Highlight.jsx'
+import Sheet from './Sheet.jsx'
 import TagEditor from './TagEditor.jsx'
+import Thumbnail from './Thumbnail.jsx'
+import { yearLabel } from './MovieCard.jsx'
+import { parseSegments } from '../lib/docParse.js'
 
-const SOURCE_LABEL = {
-  user: 'תוכן שהוזן ידנית',
-  fetched: 'תוכן שנשלף מהמסמך',
-  auto: 'תקציר אוטומטי (מבוסס על פרטי הקלטת)',
+const DATE_RE = /(\(?\d{1,2}[/.]\d{1,2}[/.]\d{2,4}\)?|\(?\d{1,2}[/.]\d{2,4}\)?|(?<!\d)(?:19|20)\d{2}(?:-(?:19|20)\d{2})?(?!\d))/
+
+function SegmentList({ segments, terms }) {
+  return (
+    <ol className="divide-y divide-stone-200 overflow-hidden rounded-xl border border-stone-200 dark:divide-stone-800 dark:border-stone-800">
+      {segments.map((s, i) => {
+        const date = s.text.match(DATE_RE)?.[0]
+        const label = date ? s.text.replace(date, '').replace(/\s+[-–]\s*$|^\s*[-–]\s+/g, '').replace(/\s{2,}/g, ' ').trim() : s.text
+        return (
+          <li key={i} className="flex items-baseline gap-3 px-3 py-2.5 text-[15px] leading-relaxed sm:px-4">
+            <span className="w-6 shrink-0 text-center text-sm font-bold tabular-nums text-amber-600 dark:text-amber-400">{s.n}</span>
+            <span className="min-w-0 flex-1"><Highlight text={label || s.text} terms={terms} /></span>
+            {date && <span dir="ltr" className="shrink-0 text-sm tabular-nums text-stone-500 dark:text-stone-400"><Highlight text={date.replace(/[()]/g, '')} terms={terms} /></span>}
+          </li>
+        )
+      })}
+    </ol>
+  )
 }
 
-/**
- * Embedded Drive player / Docs viewer.
- *
- * - `sandbox` without allow-popups / allow-top-navigation: Drive's own "open in Drive" (pop-out)
- *   button and links inside docs can no longer navigate away from the app.
- * - Our own "מסך מלא" button enlarges the frame inside the app (native fullscreen where the
- *   browser supports it, CSS full-viewport overlay otherwise, e.g. iPhone). The phone's Back
- *   button / gesture exits full screen instead of leaving the app.
- */
-function EmbedFrame({ src, title, kind }) {
-  const [loaded, setLoaded] = useState(false)
-  const [expanded, setExpanded] = useState(false)
-  const wrapRef = useRef(null)
-  const pushedRef = useRef(false)
-  useEffect(() => setLoaded(false), [src])
+/** Editor for the deep-search text of a "מה בקלטת" doc (saved on close too, so nothing is lost). */
+function DocTextEditor({ docId, indexEntry, userText, onSave }) {
+  const [draft, setDraft] = useState(userText || '')
+  const latest = useRef({ draft, userText })
+  latest.current = { draft, userText }
+  useEffect(() => () => {
+    const { draft: d, userText: u } = latest.current
+    if ((u || '') !== d) onSave(docId, d)
+  }, [docId, onSave])
+  const dirty = (userText || '') !== draft
+  return (
+    <div className="space-y-2">
+      <p className="text-sm text-stone-600 dark:text-stone-300">
+        {indexEntry?.source === 'fetched' ? 'החיפוש כבר כולל את תוכן המסמך. אפשר להוסיף כאן פרטים משלכם (מי מופיע, מה קורה) — גם הם ייכללו בחיפוש.' : 'הדביקו כאן את תוכן המסמך כדי שהחיפוש ימצא כל מילה בו.'}
+      </p>
+      <textarea
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        rows={5}
+        placeholder="טקסט נוסף לחיפוש…"
+        className="w-full resize-y rounded-xl border border-stone-300 bg-white p-3 text-base leading-relaxed outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/30 sm:text-sm dark:border-stone-700 dark:bg-stone-950/50"
+      />
+      <div className="flex justify-end">
+        <button type="button" disabled={!dirty} onClick={() => onSave(docId, draft)} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-amber-500 px-4 text-sm font-semibold text-stone-950 hover:bg-amber-400 disabled:bg-stone-200 disabled:text-stone-500 dark:disabled:bg-stone-800">
+          {dirty ? 'שמור' : <><Check className="size-4" aria-hidden /> נשמר</>}
+        </button>
+      </div>
+    </div>
+  )
+}
 
-  const expand = () => {
-    // Extra history entry (same URL & router state) so Back closes full screen.
-    window.history.pushState(window.history.state, '')
-    pushedRef.current = true
-    setExpanded(true)
-    const el = wrapRef.current
-    const req = el?.requestFullscreen || el?.webkitRequestFullscreen
-    if (req) {
-      Promise.resolve(req.call(el))
-        .then(() => { if (kind === 'video') screen.orientation?.lock?.('landscape').catch(() => {}) })
-        .catch(() => { /* not allowed → CSS overlay only */ })
-    }
-  }
+function DetailsPanel({ movie, docIndexEntry, userDocText, onSaveDocText, terms }) {
+  const fetchedSegments = docIndexEntry?.source === 'fetched' ? docIndexEntry.segments : []
+  const userSegments = userDocText ? parseSegments(userDocText) : []
+  const segments = fetchedSegments.length ? fetchedSegments : userSegments
+  const [showOriginal, setShowOriginal] = useState(!segments.length)
+  return (
+    <div className="space-y-4">
+      {segments.length > 0 && <SegmentList segments={segments} terms={terms} />}
+      <div className="flex flex-wrap gap-2">
+        {segments.length > 0 && (
+          <button type="button" onClick={() => setShowOriginal((v) => !v)} className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-stone-300 px-3 text-sm font-semibold hover:border-amber-500 hover:text-amber-800 dark:border-stone-700 dark:hover:text-amber-300">
+            <FileText className="size-4" aria-hidden /> {showOriginal ? 'הסתר את המסמך המקורי' : 'הצג את המסמך המקורי'}
+          </button>
+        )}
+        <a href={movie.detailsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800">
+          <ExternalLink className="size-4" aria-hidden /> פתח ב-Google Docs
+        </a>
+      </div>
+      {showOriginal && movie.detailsEmbedUrl && (
+        <EmbedFrame src={movie.detailsEmbedUrl} title={`מה בקלטת – ${movie.displayTitle}`} kind="doc" externalUrl={movie.detailsUrl} />
+      )}
+      <details className="group rounded-xl border border-stone-200 dark:border-stone-800">
+        <summary className="flex h-12 cursor-pointer list-none items-center gap-2 px-4 text-sm font-semibold text-stone-600 dark:text-stone-300">
+          <Pencil className="size-4" aria-hidden /> הוספת פרטים לחיפוש
+          <ChevronLeft className="ms-auto size-4 transition group-open:-rotate-90" aria-hidden />
+        </summary>
+        <div className="px-4 pb-4">
+          <DocTextEditor docId={movie.docId} indexEntry={docIndexEntry} userText={userDocText} onSave={onSaveDocText} />
+        </div>
+      </details>
+    </div>
+  )
+}
 
-  const collapse = () => {
-    if (pushedRef.current) window.history.back() // → popstate → exitExpanded
-    else exitExpanded()
-  }
+function PartsPanel({ parts, current, onSelect }) {
+  return (
+    <ol className="space-y-2">
+      {parts.map((m) => (
+        <li key={m.id}>
+          <button
+            type="button"
+            onClick={() => onSelect(m)}
+            aria-current={m.id === current.id ? 'true' : undefined}
+            className={`flex w-full items-center gap-3 rounded-xl p-2 text-start transition ${m.id === current.id ? 'bg-amber-500/15 ring-1 ring-amber-500/60' : 'hover:bg-stone-100 dark:hover:bg-stone-800'}`}
+          >
+            <Thumbnail movie={m} className="aspect-video w-28 shrink-0 rounded-lg" iconClass="size-5" />
+            <span className="min-w-0">
+              <span className="block font-semibold">{m.part ? `חלק ${m.part}` : m.displayTitle}</span>
+              <span className="line-clamp-1 text-sm text-stone-500 dark:text-stone-400">{m.displayTitle}</span>
+            </span>
+            {m.id === current.id && <span className="ms-auto shrink-0 text-xs font-semibold text-amber-700 dark:text-amber-300">מוצג עכשיו</span>}
+          </button>
+        </li>
+      ))}
+    </ol>
+  )
+}
 
-  const exitExpanded = () => {
-    pushedRef.current = false
-    setExpanded(false)
-    screen.orientation?.unlock?.()
-    const fsEl = document.fullscreenElement || document.webkitFullscreenElement
-    if (fsEl) (document.exitFullscreen || document.webkitExitFullscreen)?.call(document)?.catch?.(() => {})
-  }
+/** Notes with debounced autosave; flushed on close so nothing is lost. */
+function NotesEditor({ movieId, note, onSave }) {
+  const [draft, setDraft] = useState(note)
+  const [status, setStatus] = useState('idle') // idle | pending | saved
+  const latest = useRef({ draft, note })
+  latest.current = { draft, note }
 
   useEffect(() => {
-    if (!expanded) return
-    const onPop = () => exitExpanded()
-    const onFsChange = () => {
-      // User left native fullscreen (system back / swipe) → also leave the overlay
-      if (!(document.fullscreenElement || document.webkitFullscreenElement)) collapse()
-    }
-    const onKey = (e) => {
-      if (e.key === 'Escape') { e.stopImmediatePropagation(); collapse() }
-    }
-    window.addEventListener('popstate', onPop)
-    window.addEventListener('keydown', onKey, true)
-    document.addEventListener('fullscreenchange', onFsChange)
-    document.addEventListener('webkitfullscreenchange', onFsChange)
-    return () => {
-      window.removeEventListener('popstate', onPop)
-      window.removeEventListener('keydown', onKey, true)
-      document.removeEventListener('fullscreenchange', onFsChange)
-      document.removeEventListener('webkitfullscreenchange', onFsChange)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [expanded])
+    if (draft === note) return
+    setStatus('pending')
+    const t = setTimeout(() => { onSave(movieId, draft); setStatus('saved') }, 700)
+    return () => clearTimeout(t)
+  }, [draft, note, movieId, onSave])
 
-  // Leaving the modal while enlarged: drop native fullscreen
   useEffect(() => () => {
-    if (document.fullscreenElement || document.webkitFullscreenElement) {
-      (document.exitFullscreen || document.webkitExitFullscreen)?.call(document)?.catch?.(() => {})
-    }
-  }, [])
-
-  const frameBox = expanded
-    ? 'fixed inset-0 z-[70] flex flex-col bg-black'
-    : `relative overflow-hidden rounded-xl ${kind === 'doc' ? 'h-[60vh] bg-white' : 'aspect-video bg-black'}`
+    const { draft: d, note: n } = latest.current
+    if (d !== n) onSave(movieId, d)
+  }, [movieId, onSave])
 
   return (
-    <div ref={wrapRef} className={frameBox}>
-      {expanded && (
-        <div className="flex shrink-0 items-center justify-between gap-2 bg-stone-950 px-3 py-2 text-stone-100" style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }}>
-          <span className="truncate text-sm font-medium">{title}</span>
-          <button
-            type="button"
-            onClick={collapse}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-amber-500 px-3 py-2 text-sm font-semibold text-stone-950 hover:bg-amber-400"
-          >
-            <Minimize2 className="size-4" /> חזרה לאפליקציה
-          </button>
-        </div>
-      )}
-      <div className={expanded ? 'relative flex-1' : 'absolute inset-0'}>
-        {!loaded && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-stone-400">
-            <Loader2 className="size-8 animate-spin text-amber-500" />
-            <span className="text-sm">טוען…</span>
-          </div>
-        )}
-        <iframe
-          key={src}
-          src={src}
-          title={title}
-          onLoad={() => setLoaded(true)}
-          sandbox="allow-scripts allow-same-origin allow-presentation allow-forms"
-          allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-          referrerPolicy="no-referrer-when-downgrade"
-          className={`absolute inset-0 size-full border-0 transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
-        />
-        {kind === 'video' && loaded && (
-          // Covers Drive's own "open in Drive" pop-out button (top-right of the player)
-          <div className="absolute right-0 top-0 z-10 size-16" aria-hidden onClick={(e) => e.preventDefault()} />
-        )}
-        {!expanded && (
-          <button
-            type="button"
-            onClick={expand}
-            className="absolute bottom-2 end-2 inline-flex items-center gap-1.5 rounded-lg bg-black/70 px-2.5 py-1.5 text-xs font-semibold text-white shadow-lg backdrop-blur transition hover:bg-black/85"
-            aria-label="מסך מלא"
-          >
-            <Maximize2 className="size-4" /> מסך מלא
-          </button>
-        )}
+    <section className="min-w-0">
+      <div className="mb-3 flex items-center justify-between">
+        <h3 className="flex items-center gap-2 font-semibold"><StickyNote className="size-4 text-amber-500" aria-hidden /> הערות אישיות</h3>
+        <span className="text-xs font-medium text-emerald-700 dark:text-emerald-400" aria-live="polite">
+          {status === 'pending' ? 'שומר…' : status === 'saved' ? '✓ נשמר' : ''}
+        </span>
       </div>
-    </div>
-  )
-}
-
-function OpenButton({ href, children, primary }) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
-        primary
-          ? 'bg-amber-500 text-stone-950 shadow-lg shadow-amber-500/20 hover:bg-amber-400'
-          : 'border border-stone-300 text-stone-700 hover:border-amber-500 hover:text-amber-700 dark:border-stone-700 dark:text-stone-200 dark:hover:text-amber-300'
-      }`}
-    >
-      <ExternalLink className="size-4" /> {children}
-    </a>
-  )
-}
-
-function DocContentEditor({ movie, indexEntry, userText, onSave }) {
-  const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState('')
-  const source = userText ? 'user' : indexEntry?.source
-  const text = userText || indexEntry?.text || ''
-
-  return (
-    <div className="rounded-xl border border-stone-200 bg-stone-50 p-3 dark:border-stone-800 dark:bg-stone-950/50">
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h4 className="text-sm font-semibold">טקסט לחיפוש עמוק</h4>
-          <p className="text-xs text-stone-500 dark:text-stone-400">מקור: {SOURCE_LABEL[source] || '—'}</p>
-        </div>
-        {!editing ? (
-          <button
-            type="button"
-            onClick={() => { setDraft(userText || (indexEntry?.source === 'fetched' ? indexEntry.text : '')); setEditing(true) }}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-stone-300 px-2.5 py-1.5 text-xs font-medium transition hover:border-amber-500 hover:text-amber-700 dark:border-stone-700 dark:hover:text-amber-300"
-          >
-            <Pencil className="size-3.5" /> {userText ? 'ערוך' : 'הדבק תוכן מהמסמך'}
-          </button>
-        ) : (
-          <div className="flex gap-1.5">
-            <button type="button" onClick={() => setEditing(false)} className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-stone-500 hover:text-stone-800 dark:hover:text-stone-200">ביטול</button>
-            <button
-              type="button"
-              onClick={() => { onSave(movie.docId, draft); setEditing(false) }}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-2.5 py-1.5 text-xs font-semibold text-stone-950 hover:bg-amber-400"
-            >
-              <Save className="size-3.5" /> שמור
-            </button>
-          </div>
-        )}
-      </div>
-      {editing ? (
-        <textarea
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          rows={8}
-          autoFocus
-          placeholder={'העתק את תוכן מסמך "מה בקלטת" (Ctrl+A, Ctrl+C) והדבק כאן — מעכשיו החיפוש ימצא כל מילה שבו. השאר ריק כדי לחזור לתקציר האוטומטי.'}
-          className="w-full resize-y rounded-lg border border-stone-300 bg-white p-2.5 text-sm leading-relaxed outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/30 dark:border-stone-700 dark:bg-stone-900"
-        />
-      ) : (
-        <p className="scrollbar-thin max-h-40 overflow-auto whitespace-pre-line text-sm leading-relaxed text-stone-600 dark:text-stone-300">{text}</p>
-      )}
-    </div>
+      <textarea
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        rows={6}
+        placeholder="מי מופיע, מה קורה, זיכרונות… (ההערות נשמרות אוטומטית ונכללות בחיפוש)"
+        className="w-full resize-y rounded-xl border border-stone-300 bg-white p-3 text-base leading-relaxed outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/30 sm:text-sm dark:border-stone-700 dark:bg-stone-950/50"
+      />
+    </section>
   )
 }
 
 export default function VideoModal({
-  movie, onClose, onPrev, onNext, position,
+  movie, onClose, onPrev, onNext, position, parts, onSelect, searchTerms,
   tags, allTags, onAddTag, onRemoveTag, onTagClick,
   note, onSaveNote, isFavorite, onToggleFavorite,
   docIndexEntry, userDocText, onSaveDocText,
 }) {
-  const [tab, setTab] = useState('video')
-  const [noteDraft, setNoteDraft] = useState(note || '')
-  const dialogRef = useRef(null)
+  const tabs = [
+    movie.detailsUrl && { id: 'details', label: 'מה בקלטת', icon: FileText },
+    parts.length > 1 && { id: 'parts', label: `חלקים (${parts.length})`, icon: Layers },
+    { id: 'tags', label: 'תגיות והערות', icon: Tags, badge: tags.length || null },
+  ].filter(Boolean)
+  const [tab, setTab] = useState(tabs[0].id)
+  const [expanded, setExpanded] = useState(false)
+  const scrollRef = useRef(null)
 
-  useEffect(() => { setTab(movie.movieUrl ? 'video' : movie.detailsUrl ? 'details' : 'tags') }, [movie.id, movie.movieUrl, movie.detailsUrl])
-  useEffect(() => { setNoteDraft(note || '') }, [movie.id, note])
+  useEffect(() => {
+    setTab((t) => (tabs.some((x) => x.id === t) ? t : tabs[0].id))
+    scrollRef.current?.scrollTo({ top: 0 })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [movie.id])
 
-  // Keyboard: Esc closes, ←/→ navigate (RTL: left = next)
+  // ← / → move between movies (RTL: left = next). Ignored while typing or on the tab list.
   useEffect(() => {
     const onKey = (e) => {
-      const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName)
-      if (e.key === 'Escape') onClose()
-      else if (!typing && e.key === 'ArrowLeft') onNext?.()
-      else if (!typing && e.key === 'ArrowRight') onPrev?.()
+      if (expanded || e.defaultPrevented) return
+      const el = document.activeElement
+      if (/^(INPUT|TEXTAREA|SELECT)$/.test(el?.tagName) || el?.closest?.('[role=tablist]')) return
+      if (e.key === 'ArrowLeft') onNext?.()
+      else if (e.key === 'ArrowRight') onPrev?.()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onClose, onNext, onPrev])
+  }, [onNext, onPrev, expanded])
 
-  // Lock background scroll & move focus into the dialog
-  useEffect(() => {
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    dialogRef.current?.focus()
-    return () => { document.body.style.overflow = prev }
-  }, [])
+  const onTabKey = (e) => {
+    const i = tabs.findIndex((t) => t.id === tab)
+    let next = null
+    if (e.key === 'ArrowLeft') next = tabs[(i + 1) % tabs.length]
+    if (e.key === 'ArrowRight') next = tabs[(i - 1 + tabs.length) % tabs.length]
+    if (next) {
+      e.preventDefault()
+      setTab(next.id)
+      document.getElementById(`tab-${next.id}`)?.focus()
+    }
+  }
 
-  const tabs = [
-    { id: 'video', label: 'צפייה', icon: Play, show: true },
-    { id: 'details', label: 'מה בקלטת', icon: FileText, show: !!movie.detailsUrl },
-    { id: 'tags', label: 'תגיות והערות', icon: Tags, show: true, badge: tags.length || null },
-  ].filter((t) => t.show)
-
-  const noteDirty = (note || '') !== noteDraft
+  const onExpandedChange = useCallback((v) => setExpanded(v), [])
+  const year = yearLabel(movie)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4" role="presentation">
-      <div className="absolute inset-0 animate-fade-in bg-black/75 backdrop-blur-sm" onClick={onClose} />
+    <Sheet onClose={onClose} labelledBy="movie-modal-title" full maxWidth="sm:max-w-5xl">
+      {/* Top bar: drag down to close on phones */}
+      <div data-sheet-drag className="relative flex h-12 shrink-0 items-center justify-between gap-2 px-2 sm:h-14 sm:px-4" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+        <span className="pointer-events-none absolute inset-x-0 top-1.5 mx-auto h-1.5 w-10 rounded-full bg-stone-300 sm:hidden dark:bg-stone-600" aria-hidden />
+        <span className="ps-2 text-sm tabular-nums text-stone-500 dark:text-stone-400">{position}</span>
+        <button type="button" onClick={onClose} className="flex size-11 items-center justify-center rounded-full text-stone-600 transition hover:bg-stone-100 hover:text-stone-900 dark:text-stone-300 dark:hover:bg-stone-800 dark:hover:text-white" aria-label="סגור">
+          <X className="size-6" aria-hidden />
+        </button>
+      </div>
 
-      <div
-        ref={dialogRef}
-        tabIndex={-1}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="movie-modal-title"
-        className="relative flex max-h-[96dvh] w-full max-w-5xl animate-pop-in flex-col overflow-hidden rounded-t-3xl border border-stone-200 bg-white shadow-2xl outline-none dark:border-stone-800 dark:bg-stone-900 sm:rounded-3xl"
-      >
-        {/* Header */}
-        <header className="flex items-start gap-3 border-b border-stone-200 px-4 py-3 dark:border-stone-800 sm:px-6 sm:py-4">
-          <div className="min-w-0 flex-1">
+      <div ref={scrollRef} className="scrollbar-thin flex-1 overflow-y-auto overscroll-contain">
+        {/* Player (sticks to the top while scrolling the details on phones) */}
+        <div className="sticky top-0 z-20 bg-white sm:static sm:px-6 dark:bg-stone-900">
+          <div className="sm:mx-auto sm:max-w-[calc(56dvh*16/9)]">
+          {movie.embedUrl ? (
+            <EmbedFrame key={movie.id} src={movie.embedUrl} title={movie.displayTitle} kind="video" movie={movie} externalUrl={movie.movieUrl} onExpandedChange={onExpandedChange} />
+          ) : (
+            <div className="flex aspect-video flex-col items-center justify-center gap-2 bg-stone-100 text-center text-stone-500 sm:rounded-xl dark:bg-stone-950">
+              <VideoOff className="size-8 text-amber-500" aria-hidden />
+              <p className="font-medium">לסרט הזה עדיין אין קישור לצפייה.</p>
+            </div>
+          )}
+          </div>
+        </div>
+
+        <div className="space-y-4 px-4 pb-8 pt-4 sm:px-6" style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
+          <div>
             <h2 id="movie-modal-title" className="font-display text-xl font-bold leading-tight sm:text-2xl">{movie.displayTitle}</h2>
-            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-stone-500 dark:text-stone-400">
-              {movie.year && <span className="inline-flex items-center gap-1"><Calendar className="size-3.5" />{movie.year}{movie.yearEnd && movie.yearEnd !== movie.year ? `–${movie.yearEnd}` : ''}</span>}
+            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-stone-500 dark:text-stone-400">
+              {year && <span className="tabular-nums">{year}</span>}
+              {movie.part && <span>חלק {movie.part}{parts.length > 1 ? ` מתוך ${parts.length}` : ''}</span>}
               {movie.type === 'audio' && <span>הקלטת שמע</span>}
-              {position && <span className="tabular-nums">{position}</span>}
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-1">
-            <button type="button" onClick={() => onToggleFavorite(movie.id)} className={`rounded-full p-2 transition ${isFavorite ? 'text-rose-500' : 'text-stone-400 hover:text-rose-500'}`} aria-label={isFavorite ? 'הסר ממועדפים' : 'הוסף למועדפים'} aria-pressed={isFavorite}>
-              <Heart className={`size-5 ${isFavorite ? 'fill-current' : ''}`} />
+
+          {/* Actions */}
+          <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+            <button type="button" onClick={() => onToggleFavorite(movie.id)} aria-pressed={isFavorite} className={`inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm font-semibold transition ${isFavorite ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400' : 'bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700'}`}>
+              <Heart className={`size-4 ${isFavorite ? 'fill-current' : ''}`} aria-hidden /> {isFavorite ? 'במועדפים' : 'מועדף'}
             </button>
-            <button type="button" onClick={onPrev} disabled={!onPrev} className="rounded-full p-2 text-stone-500 transition hover:bg-stone-100 disabled:opacity-30 dark:hover:bg-stone-800" aria-label="הקודם">
-              <ChevronRight className="size-5" />
+            <button type="button" onClick={onPrev} disabled={!onPrev} className="inline-flex h-10 shrink-0 items-center gap-1 rounded-full bg-stone-100 pe-4 ps-3 text-sm font-semibold transition hover:bg-stone-200 disabled:opacity-40 dark:bg-stone-800 dark:hover:bg-stone-700">
+              <ChevronRight className="size-4" aria-hidden /> הקודם
             </button>
-            <button type="button" onClick={onNext} disabled={!onNext} className="rounded-full p-2 text-stone-500 transition hover:bg-stone-100 disabled:opacity-30 dark:hover:bg-stone-800" aria-label="הבא">
-              <ChevronLeft className="size-5" />
+            <button type="button" onClick={onNext} disabled={!onNext} className="inline-flex h-10 shrink-0 items-center gap-1 rounded-full bg-stone-100 pe-3 ps-4 text-sm font-semibold transition hover:bg-stone-200 disabled:opacity-40 dark:bg-stone-800 dark:hover:bg-stone-700">
+              הבא <ChevronLeft className="size-4" aria-hidden />
             </button>
-            <button type="button" onClick={onClose} className="rounded-full p-2 text-stone-500 transition hover:bg-stone-100 hover:text-stone-900 dark:hover:bg-stone-800 dark:hover:text-white" aria-label="סגור">
-              <X className="size-5" />
-            </button>
+            {movie.movieUrl && (
+              <a href={movie.movieUrl} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800">
+                <ExternalLink className="size-4" aria-hidden /> <bdi>Google Drive</bdi>
+              </a>
+            )}
           </div>
-        </header>
 
-        {/* Tabs */}
-        <nav className="no-scrollbar flex gap-1 overflow-x-auto border-b border-stone-200 px-3 dark:border-stone-800 sm:px-5" role="tablist">
-          {tabs.map(({ id, label, icon: Icon, badge }) => (
-            <button
-              key={id}
-              type="button"
-              role="tab"
-              aria-selected={tab === id}
-              onClick={() => setTab(id)}
-              className={`relative inline-flex shrink-0 items-center gap-1.5 px-3 py-3 text-sm font-medium transition ${tab === id ? 'text-amber-700 dark:text-amber-300' : 'text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200'}`}
-            >
-              <Icon className="size-4" /> {label}
-              {badge && <span className="rounded-full bg-amber-500/20 px-1.5 text-[10px] tabular-nums">{badge}</span>}
-              <span className={`absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-amber-500 transition-transform duration-300 ${tab === id ? 'scale-x-100' : 'scale-x-0'}`} />
-            </button>
-          ))}
-        </nav>
+          {/* Tabs */}
+          <div role="tablist" aria-label="פרטי הסרט" onKeyDown={onTabKey} className="no-scrollbar -mx-4 flex gap-1 overflow-x-auto border-b border-stone-200 px-4 sm:mx-0 sm:px-0 dark:border-stone-800">
+            {tabs.map(({ id, label, icon: Icon, badge }) => (
+              <button
+                key={id}
+                id={`tab-${id}`}
+                type="button"
+                role="tab"
+                aria-selected={tab === id}
+                aria-controls={`panel-${id}`}
+                tabIndex={tab === id ? 0 : -1}
+                onClick={() => setTab(id)}
+                className={`relative inline-flex h-12 shrink-0 items-center gap-1.5 px-3 text-sm font-semibold transition ${tab === id ? 'text-amber-700 dark:text-amber-300' : 'text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200'}`}
+              >
+                <Icon className="size-4" aria-hidden /> {label}
+                {badge && <span className="rounded-full bg-amber-500/20 px-1.5 text-[11px] tabular-nums">{badge}</span>}
+                <span className={`absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-amber-500 transition-transform duration-300 ${tab === id ? 'scale-x-100' : 'scale-x-0'}`} />
+              </button>
+            ))}
+          </div>
 
-        {/* Body */}
-        <div className="scrollbar-thin flex-1 overflow-y-auto p-4 sm:p-6">
-          {tab === 'video' && (
-            <div className="animate-fade-in space-y-4">
-              {movie.embedUrl ? (
-                <>
-                  <EmbedFrame src={movie.embedUrl} title={movie.displayTitle} kind="video" />
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="flex items-start gap-2 text-xs leading-relaxed text-stone-500 dark:text-stone-400">
-                      <AlertCircle className="mt-0.5 size-4 shrink-0 text-amber-500" />
-                      להגדלה השתמשו בכפתור "מסך מלא" — כך נשארים באפליקציה. אם הסרטון לא מוצג (הרשאות שיתוף או קובץ שטרם עובד) — פתחו אותו ב-Google Drive.
-                    </p>
-                    <div className="flex shrink-0 flex-wrap gap-2">
-                      {movie.detailsUrl && (
-                        <button type="button" onClick={() => setTab('details')} className="inline-flex items-center justify-center gap-2 rounded-xl border border-stone-300 px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:border-amber-500 hover:text-amber-700 dark:border-stone-700 dark:text-stone-200 dark:hover:text-amber-300">
-                          <FileText className="size-4" /> מה בקלטת
-                        </button>
-                      )}
-                      <OpenButton href={movie.movieUrl}>פתח ב-Google Drive</OpenButton>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className="flex aspect-video flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-stone-300 text-center text-stone-500 dark:border-stone-700">
-                  <AlertCircle className="size-8 text-amber-500" />
-                  <p className="font-medium">לסרט הזה עדיין אין קישור לצפייה.</p>
-                  <p className="text-sm">ניתן להוסיף אותו בקובץ <code dir="ltr">src/data/catalog.json</code>.</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {tab === 'details' && movie.detailsUrl && (
-            <div className="animate-fade-in space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm text-stone-600 dark:text-stone-300">פירוט תוכן הקלטת ("מה בקלטת") — מסמך Google Docs.</p>
-                <OpenButton href={movie.detailsUrl}>פתח ב-Google Docs</OpenButton>
+          <div id={`panel-${tab}`} role="tabpanel" aria-labelledby={`tab-${tab}`} className="min-w-0 animate-fade-in">
+            {tab === 'details' && movie.detailsUrl && (
+              <DetailsPanel key={movie.docId} movie={movie} docIndexEntry={docIndexEntry} userDocText={userDocText} onSaveDocText={onSaveDocText} terms={searchTerms} />
+            )}
+            {tab === 'parts' && <PartsPanel parts={parts} current={movie} onSelect={onSelect} />}
+            {tab === 'tags' && (
+              <div className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-2">
+                <section className="min-w-0">
+                  <h3 className="mb-3 flex items-center gap-2 font-semibold"><Tags className="size-4 text-amber-500" aria-hidden /> תגיות</h3>
+                  <TagEditor movie={movie} tags={tags} allTags={allTags} onAdd={onAddTag} onRemove={onRemoveTag} onTagClick={onTagClick} />
+                  <p className="mt-3 text-xs text-stone-500 dark:text-stone-400">לחיצה על תגית מציגה את כל הסרטים שמתויגים בה.</p>
+                </section>
+                <NotesEditor key={movie.id} movieId={movie.id} note={note} onSave={onSaveNote} />
               </div>
-              <EmbedFrame src={movie.detailsEmbedUrl} title={`מה בקלטת – ${movie.displayTitle}`} kind="doc" />
-              <DocContentEditor movie={movie} indexEntry={docIndexEntry} userText={userDocText} onSave={onSaveDocText} />
-            </div>
-          )}
-
-          {tab === 'tags' && (
-            <div className="animate-fade-in grid min-h-[22rem] gap-6 md:grid-cols-2">
-              <section>
-                <h3 className="mb-3 flex items-center gap-2 font-semibold"><Tags className="size-4 text-amber-500" /> תגיות</h3>
-                <TagEditor movie={movie} tags={tags} allTags={allTags} onAdd={onAddTag} onRemove={onRemoveTag} onTagClick={onTagClick} />
-                <p className="mt-3 text-xs text-stone-500 dark:text-stone-400">לחיצה על תגית תסנן את הקטלוג לכל הסרטים המתויגים בה.</p>
-              </section>
-              <section>
-                <h3 className="mb-3 flex items-center gap-2 font-semibold"><StickyNote className="size-4 text-amber-500" /> הערות אישיות</h3>
-                <textarea
-                  value={noteDraft}
-                  onChange={(e) => setNoteDraft(e.target.value)}
-                  onBlur={() => { if (noteDirty) onSaveNote(movie.id, noteDraft) }}
-                  rows={6}
-                  placeholder="מי מופיע, מה קורה, זיכרונות… (גם ההערות נכללות בחיפוש)"
-                  className="w-full resize-y rounded-xl border border-stone-300 bg-white p-3 text-sm leading-relaxed outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/30 dark:border-stone-700 dark:bg-stone-950/50"
-                />
-                <div className="mt-2 flex justify-end">
-                  <button
-                    type="button"
-                    disabled={!noteDirty}
-                    onClick={() => onSaveNote(movie.id, noteDraft)}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500 px-3 py-2 text-sm font-semibold text-stone-950 transition hover:bg-amber-400 disabled:opacity-40"
-                  >
-                    <Save className="size-4" /> {noteDirty ? 'שמור הערה' : 'נשמר'}
-                  </button>
-                </div>
-              </section>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </Sheet>
   )
 }

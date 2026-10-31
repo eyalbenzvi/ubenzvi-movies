@@ -21,6 +21,7 @@ const catalog = JSON.parse(await readFile(catalogPath, 'utf8'))
 let existing = {}
 try { existing = JSON.parse(await readFile(outPath, 'utf8')) } catch { /* first run */ }
 
+const MAX_CHARS = 200_000
 const docs = new Map()
 for (const row of catalog) {
   if (!row.detailsUrl) continue
@@ -44,8 +45,13 @@ for (const [id, resourceKey] of docs) {
       headers: resourceKey ? { 'X-Goog-Drive-Resource-Keys': `${id}/${resourceKey}` } : {},
     })
     const type = res.headers.get('content-type') || ''
+    if ([401, 403, 404].includes(res.status) && out[id]) {
+      delete out[id] // access revoked / deleted → stop publishing stale content
+      console.warn(`  ! ${id}: removed previously fetched text (HTTP ${res.status})`)
+    }
     if (!res.ok || type.includes('text/html')) throw new Error(`HTTP ${res.status} (doc is probably not shared publicly)`)
-    const text = (await res.text()).replace(/^﻿/, '').replace(/\r\n/g, '\n').trim()
+    const text = (await res.text()).replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').trim()
+    if (text.length > MAX_CHARS) throw new Error(`document too large (${text.length} chars)`)
     out[id] = { text, fetchedAt: new Date().toISOString() }
     ok++
     console.log(`  ✓ ${id} (${text.length} chars)`)

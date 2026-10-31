@@ -1,12 +1,21 @@
-import { ArrowDownUp, FileText, Heart, LayoutGrid, List, Music, RotateCcw, Video } from 'lucide-react'
+import { useState } from 'react'
+import { ArrowDownUp, FileText, GalleryHorizontalEnd, Heart, LayoutGrid, List, Music, RotateCcw, SlidersHorizontal, Video, X } from 'lucide-react'
+import Sheet from './Sheet.jsx'
 import TagChip from './TagChip.jsx'
+import { useBackClose } from '../hooks/useBackClose.js'
 
 export const SORTS = [
-  { id: 'az', label: 'א–ת' },
-  { id: 'za', label: 'ת–א' },
+  { id: 'relevance', label: 'מומלץ' },
   { id: 'newest', label: 'החדש ביותר' },
   { id: 'oldest', label: 'הישן ביותר' },
-  { id: 'relevance', label: 'רלוונטיות' },
+  { id: 'az', label: 'א–ת' },
+  { id: 'za', label: 'ת–א' },
+]
+
+const VIEWS = [
+  { id: 'rows', label: 'שורות', icon: GalleryHorizontalEnd },
+  { id: 'grid', label: 'רשת', icon: LayoutGrid },
+  { id: 'list', label: 'רשימה', icon: List },
 ]
 
 export function decadeLabel(d) {
@@ -14,107 +23,242 @@ export function decadeLabel(d) {
   return d < 2000 ? `שנות ה-${String(d).slice(2)}` : `שנות ה-${d}`
 }
 
-function Pill({ active, onClick, children, title }) {
+function Pill({ active, onClick, children, title, className = '' }) {
   return (
     <button
       type="button"
       onClick={onClick}
       title={title}
       aria-pressed={active}
-      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200 ${
+      className={`inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-sm font-medium transition-colors duration-200 sm:h-9 sm:text-[13px] ${
         active
-          ? 'border-amber-500 bg-amber-500 text-stone-950 shadow-md shadow-amber-500/20'
-          : 'border-stone-300 bg-white/60 text-stone-600 hover:border-amber-500/70 hover:text-amber-700 dark:border-stone-700 dark:bg-stone-900/50 dark:text-stone-300 dark:hover:text-amber-300'
-      }`}
+          ? 'border-amber-500 bg-amber-500 text-stone-950'
+          : 'border-stone-300 bg-white/70 text-stone-700 hover:border-amber-500/70 hover:text-amber-800 dark:border-stone-700 dark:bg-stone-900/60 dark:text-stone-200 dark:hover:text-amber-300'
+      } ${className}`}
     >
       {children}
     </button>
   )
 }
 
-export default function FilterBar({ filters, setFilter, decadeCounts, yearsInDecade, allTags, resultCount, totalCount, onReset, hasActiveFilters }) {
-  const { decade, year, tags, onlyDetails, onlyFavorites, type, sort, view } = filters
-  const toggleTag = (t) => setFilter('tags', tags.includes(t) ? tags.filter((x) => x !== t) : [...tags, t])
-  const usedTags = allTags.filter((t) => t.count > 0 || tags.includes(t.name))
+const Count = ({ n, active }) => <span className={`tabular-nums ${active ? 'text-stone-800' : 'text-stone-500 dark:text-stone-400'}`}>{n}</span>
+
+function DecadePills({ filters, setFilter, decadeCounts }) {
+  const { decade } = filters
+  const list = decade != null && !decadeCounts.some((d) => d.decade === decade) ? [...decadeCounts, { decade, count: 0 }] : decadeCounts
+  return (
+    <>
+      <Pill active={decade == null} onClick={() => setFilter('decade', null)}>כל השנים</Pill>
+      {list.map(({ decade: d, count }) => (
+        <Pill key={d} active={decade === d} onClick={() => setFilter('decade', decade === d ? null : d)}>
+          {decadeLabel(d)} <Count n={count} active={decade === d} />
+        </Pill>
+      ))}
+    </>
+  )
+}
+
+function YearSelect({ filters, setFilter, yearsInDecade }) {
+  const { year } = filters
+  if (yearsInDecade.length < 2 && year == null) return null
+  const years = year != null && !yearsInDecade.some((y) => y.year === year) ? [...yearsInDecade, { year, count: 0 }] : yearsInDecade
+  return (
+    <select
+      value={year ?? ''}
+      onChange={(e) => setFilter('year', e.target.value ? Number(e.target.value) : null)}
+      className="h-10 shrink-0 rounded-full border border-amber-500/70 bg-white px-3 text-sm font-medium text-amber-900 outline-none sm:h-9 dark:bg-stone-900 dark:text-amber-200"
+      aria-label="סינון לפי שנה"
+    >
+      <option value="">כל שנות העשור</option>
+      {years.map(({ year: y, count }) => <option key={y} value={y}>{y} ({count})</option>)}
+    </select>
+  )
+}
+
+function Toggles({ filters, setFilter }) {
+  const { onlyDetails, onlyFavorites, type } = filters
+  return (
+    <>
+      <Pill active={onlyDetails} onClick={() => setFilter('onlyDetails', !onlyDetails)} title='רק סרטים עם פירוט "מה בקלטת"'>
+        <FileText className="size-4" aria-hidden /> עם ״מה בקלטת״
+      </Pill>
+      <Pill active={onlyFavorites} onClick={() => setFilter('onlyFavorites', !onlyFavorites)}>
+        <Heart className="size-4" aria-hidden /> מועדפים
+      </Pill>
+      <Pill active={type === 'video'} onClick={() => setFilter('type', type === 'video' ? 'all' : 'video')}>
+        <Video className="size-4" aria-hidden /> וידאו
+      </Pill>
+      <Pill active={type === 'audio'} onClick={() => setFilter('type', type === 'audio' ? 'all' : 'audio')}>
+        <Music className="size-4" aria-hidden /> שמע
+      </Pill>
+    </>
+  )
+}
+
+function SortSelect({ sort, setFilter, className = '' }) {
+  return (
+    <label className={`relative inline-flex items-center ${className}`}>
+      <ArrowDownUp className="pointer-events-none absolute start-3 size-4 text-stone-500" aria-hidden />
+      <select
+        value={sort}
+        onChange={(e) => setFilter('sort', e.target.value)}
+        className="h-10 w-full appearance-none rounded-full border border-stone-300 bg-white pe-4 ps-9 text-sm font-medium outline-none focus:border-amber-500 sm:h-9 dark:border-stone-700 dark:bg-stone-900"
+        aria-label="מיון"
+      >
+        {SORTS.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+      </select>
+    </label>
+  )
+}
+
+function ViewSwitch({ view, setFilter }) {
+  return (
+    <div className="flex shrink-0 rounded-full border border-stone-300 p-0.5 dark:border-stone-700" role="group" aria-label="תצוגה">
+      {VIEWS.map(({ id, label, icon: Icon }) => (
+        <button
+          key={id}
+          type="button"
+          onClick={() => setFilter('view', id)}
+          aria-pressed={view === id}
+          aria-label={`תצוגת ${label}`}
+          title={label}
+          className={`flex size-9 items-center justify-center rounded-full transition sm:size-8 ${view === id ? 'bg-amber-500 text-stone-950' : 'text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100'}`}
+        >
+          <Icon className="size-4" aria-hidden />
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function TagFilters({ filters, setFilter, allTags }) {
+  const toggleTag = (t) => setFilter('tags', filters.tags.includes(t) ? filters.tags.filter((x) => x !== t) : [...filters.tags, t])
+  const used = allTags.filter((t) => t.count > 0 || filters.tags.includes(t.name))
+  if (!used.length) return <p className="text-sm text-stone-500 dark:text-stone-400">עוד אין תגיות. פתחו סרט והוסיפו תגיות בלשונית ״תגיות והערות״.</p>
+  return used.map((t) => <TagChip key={t.name} name={t.name} count={t.count} active={filters.tags.includes(t.name)} onClick={toggleTag} />)
+}
+
+/** Removable chips for every active filter. */
+function ActiveChips({ filters, setFilter, onReset }) {
+  const chips = []
+  if (filters.decade != null) chips.push({ key: 'decade', label: decadeLabel(filters.decade), clear: () => setFilter('decade', null) })
+  if (filters.year != null) chips.push({ key: 'year', label: String(filters.year), clear: () => setFilter('year', null) })
+  for (const t of filters.tags) chips.push({ key: `t-${t}`, label: `# ${t}`, clear: () => setFilter('tags', filters.tags.filter((x) => x !== t)) })
+  if (filters.onlyDetails) chips.push({ key: 'det', label: 'עם ״מה בקלטת״', clear: () => setFilter('onlyDetails', false) })
+  if (filters.onlyFavorites) chips.push({ key: 'fav', label: 'מועדפים', clear: () => setFilter('onlyFavorites', false) })
+  if (filters.type !== 'all') chips.push({ key: 'type', label: filters.type === 'audio' ? 'שמע' : 'וידאו', clear: () => setFilter('type', 'all') })
+  if (!chips.length) return null
+  return (
+    <div className="no-scrollbar -mx-4 flex items-center gap-1.5 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0">
+      {chips.map((c) => (
+        <button key={c.key} type="button" onClick={c.clear} className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full bg-amber-500/15 pe-2 ps-3 text-sm font-medium text-amber-900 hover:bg-amber-500/25 dark:text-amber-200" aria-label={`הסר מסנן ${c.label}`}>
+          {c.label} <X className="size-3.5" aria-hidden />
+        </button>
+      ))}
+      <button type="button" onClick={onReset} className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full px-3 text-sm font-medium text-rose-700 hover:bg-rose-500/10 dark:text-rose-400">
+        <RotateCcw className="size-3.5" aria-hidden /> נקה הכל
+      </button>
+    </div>
+  )
+}
+
+function FilterSheet({ onClose, resultCount, ...props }) {
+  const close = useBackClose(onClose)
+  const { filters, setFilter } = props
+  return (
+    <Sheet onClose={close} labelledBy="filters-title">
+      <div className="flex items-center justify-between px-5 pb-2" data-sheet-drag>
+        <h2 id="filters-title" className="text-lg font-bold">סינון ומיון</h2>
+        <button type="button" onClick={close} className="flex size-11 items-center justify-center rounded-full text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800" aria-label="סגור"><X className="size-5" aria-hidden /></button>
+      </div>
+      <div className="flex-1 space-y-6 overflow-y-auto overscroll-contain px-5 pb-4">
+        <section className="space-y-2">
+          <h3 className="text-sm font-semibold text-stone-500 dark:text-stone-400">תקופה</h3>
+          <div className="flex flex-wrap gap-2"><DecadePills {...props} /></div>
+          <YearSelect {...props} />
+        </section>
+        <section className="space-y-2">
+          <h3 className="text-sm font-semibold text-stone-500 dark:text-stone-400">הצג רק</h3>
+          <div className="flex flex-wrap gap-2"><Toggles {...props} /></div>
+        </section>
+        <section className="space-y-2">
+          <h3 className="text-sm font-semibold text-stone-500 dark:text-stone-400">תגיות</h3>
+          <div className="flex flex-wrap gap-2"><TagFilters {...props} /></div>
+        </section>
+        <section className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-stone-500 dark:text-stone-400">מיון</h3>
+            <SortSelect sort={filters.sort} setFilter={setFilter} className="w-full" />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-stone-500 dark:text-stone-400">תצוגה</h3>
+            <ViewSwitch view={filters.view} setFilter={setFilter} />
+          </div>
+        </section>
+      </div>
+      <div className="flex gap-2 border-t border-stone-200 p-4 dark:border-stone-800" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
+        <button type="button" onClick={props.onReset} className="h-12 rounded-xl px-4 text-sm font-semibold text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800">איפוס</button>
+        <button type="button" onClick={close} className="h-12 flex-1 rounded-xl bg-amber-500 text-base font-bold text-stone-950 hover:bg-amber-400">
+          הצג {resultCount} סרטים
+        </button>
+      </div>
+    </Sheet>
+  )
+}
+
+export default function FilterBar(props) {
+  const { filters, setFilter, resultCount, totalCount, onReset } = props
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const activeCount =
+    (filters.decade != null) + (filters.year != null) + filters.tags.length + filters.onlyDetails + filters.onlyFavorites + (filters.type !== 'all')
 
   return (
     <section className="space-y-3" aria-label="סינון ומיון">
-      {/* Decades */}
-      <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
-        <Pill active={decade === null} onClick={() => setFilter('decade', null)}>כל השנים</Pill>
-        {decadeCounts.map(({ decade: d, count }) => (
-          <Pill key={d} active={decade === d} onClick={() => setFilter('decade', decade === d ? null : d)}>
-            {decadeLabel(d)} <span className="tabular-nums opacity-60">{count}</span>
+      {/* Phone: one compact row; everything else lives in the bottom sheet */}
+      <div className="flex items-center gap-2 sm:hidden">
+        <div className="no-scrollbar -ms-4 flex min-w-0 flex-1 items-center gap-2 overflow-x-auto ps-4">
+          <Pill active={activeCount > 0} onClick={() => setSheetOpen(true)}>
+            <SlidersHorizontal className="size-4" aria-hidden /> סינון
+            {activeCount > 0 && <span className="flex size-5 items-center justify-center rounded-full bg-stone-950 text-[11px] font-bold text-amber-400">{activeCount}</span>}
           </Pill>
-        ))}
-        {yearsInDecade.length > 1 && (
-          <select
-            value={year ?? ''}
-            onChange={(e) => setFilter('year', e.target.value ? Number(e.target.value) : null)}
-            className="shrink-0 animate-fade-in rounded-full border border-amber-500/60 bg-white px-3 py-1.5 text-xs font-medium text-amber-800 outline-none dark:bg-stone-900 dark:text-amber-200"
-            aria-label="סינון לפי שנה"
-          >
-            <option value="">כל שנות העשור</option>
-            {yearsInDecade.map(({ year: y, count }) => <option key={y} value={y}>{y} ({count})</option>)}
-          </select>
-        )}
+          <DecadePills {...props} />
+        </div>
       </div>
 
-      {/* Tags */}
-      {usedTags.length > 0 && (
-        <div className="no-scrollbar -mx-4 flex items-center gap-1.5 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0">
-          <span className="shrink-0 text-xs font-semibold text-stone-500 dark:text-stone-400">תגיות:</span>
-          {usedTags.map((t) => (
-            <TagChip key={t.name} name={t.name} count={t.count} active={tags.includes(t.name)} onClick={toggleTag} />
-          ))}
+      {/* Tablet & desktop: inline */}
+      <div className="hidden space-y-3 sm:block">
+        <div className="flex flex-wrap items-center gap-2">
+          <DecadePills {...props} />
+          <YearSelect {...props} />
         </div>
-      )}
-
-      {/* Toggles, sort & view */}
-      <div className="flex flex-wrap items-center gap-2">
-        <Pill active={onlyDetails} onClick={() => setFilter('onlyDetails', !onlyDetails)} title='רק סרטים עם מסמך "מה בקלטת"'>
-          <FileText className="size-3.5" /> עם "מה בקלטת"
-        </Pill>
-        <Pill active={onlyFavorites} onClick={() => setFilter('onlyFavorites', !onlyFavorites)}>
-          <Heart className="size-3.5" /> מועדפים
-        </Pill>
-        <Pill active={type === 'video'} onClick={() => setFilter('type', type === 'video' ? 'all' : 'video')}>
-          <Video className="size-3.5" /> וידאו
-        </Pill>
-        <Pill active={type === 'audio'} onClick={() => setFilter('type', type === 'audio' ? 'all' : 'audio')}>
-          <Music className="size-3.5" /> שמע
-        </Pill>
-        {hasActiveFilters && (
-          <button type="button" onClick={onReset} className="inline-flex animate-fade-in items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-500/10 dark:text-rose-400">
-            <RotateCcw className="size-3.5" /> נקה הכל
-          </button>
+        {props.allTags.some((t) => t.count > 0) && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-sm font-semibold text-stone-500 dark:text-stone-400">תגיות:</span>
+            <TagFilters {...props} />
+          </div>
         )}
-
-        <div className="ms-auto flex items-center gap-2">
-          <span className="text-xs tabular-nums text-stone-500 dark:text-stone-400" aria-live="polite">
-            {resultCount === totalCount ? `${totalCount} סרטים` : `${resultCount} מתוך ${totalCount}`}
-          </span>
-          <label className="relative inline-flex items-center">
-            <ArrowDownUp className="pointer-events-none absolute start-2.5 size-3.5 text-stone-400" aria-hidden />
-            <select
-              value={sort}
-              onChange={(e) => setFilter('sort', e.target.value)}
-              className="appearance-none rounded-full border border-stone-300 bg-white py-1.5 pe-3 ps-7 text-xs font-medium outline-none focus:border-amber-500 dark:border-stone-700 dark:bg-stone-900"
-              aria-label="מיון"
-            >
-              {SORTS.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
-            </select>
-          </label>
-          <div className="flex rounded-full border border-stone-300 p-0.5 dark:border-stone-700" role="group" aria-label="תצוגה">
-            <button type="button" onClick={() => setFilter('view', 'grid')} aria-pressed={view === 'grid'} className={`rounded-full p-1.5 transition ${view === 'grid' ? 'bg-amber-500 text-stone-950' : 'text-stone-500 hover:text-stone-800 dark:hover:text-stone-200'}`} aria-label="תצוגת רשת">
-              <LayoutGrid className="size-4" />
-            </button>
-            <button type="button" onClick={() => setFilter('view', 'list')} aria-pressed={view === 'list'} className={`rounded-full p-1.5 transition ${view === 'list' ? 'bg-amber-500 text-stone-950' : 'text-stone-500 hover:text-stone-800 dark:hover:text-stone-200'}`} aria-label="תצוגת רשימה">
-              <List className="size-4" />
-            </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Toggles {...props} />
+          <div className="ms-auto flex items-center gap-2">
+            <span className="text-sm tabular-nums text-stone-500 dark:text-stone-400" aria-live="polite">
+              {resultCount === totalCount ? `${totalCount} סרטים` : `${resultCount} מתוך ${totalCount}`}
+            </span>
+            <SortSelect sort={filters.sort} setFilter={setFilter} />
+            <ViewSwitch view={filters.view} setFilter={setFilter} />
           </div>
         </div>
       </div>
+
+      <ActiveChips filters={filters} setFilter={setFilter} onReset={onReset} />
+
+      <div className="flex items-center justify-between gap-2 sm:hidden">
+        <span className="text-sm tabular-nums text-stone-500 dark:text-stone-400" aria-live="polite">
+          {resultCount === totalCount ? `${totalCount} סרטים` : `${resultCount} מתוך ${totalCount}`}
+        </span>
+        <ViewSwitch view={filters.view} setFilter={setFilter} />
+      </div>
+
+      {sheetOpen && <FilterSheet {...props} onClose={() => setSheetOpen(false)} />}
     </section>
   )
 }

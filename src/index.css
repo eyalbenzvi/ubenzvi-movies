@@ -2,41 +2,63 @@
 
 /* Class-based dark mode (toggled on <html>) */
 @custom-variant dark (&:where(.dark, .dark *));
+/* Devices with a real hover pointer (mouse / trackpad) */
+@custom-variant can-hover (@media (hover: hover) and (pointer: fine));
 
 @theme {
   --font-sans: "Heebo", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
   --font-display: "Frank Ruhl Libre", "Heebo", serif;
-  --animate-fade-in: fade-in 0.25s ease-out both;
-  --animate-pop-in: pop-in 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
-  --animate-rise: rise 0.4s ease-out both;
+  --animate-fade-in: fade-in 0.2s ease-out both;
+  --animate-pop-in: pop-in 0.26s cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
+  --animate-sheet-up: sheet-up 0.3s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  --animate-rise: rise 0.3s ease-out both;
+  --animate-shimmer: shimmer 1.4s linear infinite;
 }
 
 @keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
 @keyframes pop-in {
-  from { opacity: 0; transform: translateY(12px) scale(0.97) }
+  from { opacity: 0; transform: translateY(10px) scale(0.98) }
   to { opacity: 1; transform: none }
 }
+@keyframes sheet-up { from { transform: translateY(100%) } to { transform: none } }
 @keyframes rise {
-  from { opacity: 0; transform: translateY(8px) }
+  from { opacity: 0; transform: translateY(6px) }
   to { opacity: 1; transform: none }
 }
+@keyframes shimmer { from { background-position: 150% 0 } to { background-position: -50% 0 } }
 
-html { scroll-behavior: smooth; }
+:root { color-scheme: light; }
+:root.dark { color-scheme: dark; }
+
+html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
 body {
   @apply bg-stone-50 text-stone-900 antialiased dark:bg-[#120e0b] dark:text-stone-100;
   font-family: var(--font-sans);
 }
 
-/* Subtle film-grain / vignette backdrop for the cinematic dark theme */
+/* Subtle warm vignette for the cinematic dark theme */
 .dark body {
   background-image:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(245, 158, 11, 0.12), transparent 60%),
-    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(190, 18, 60, 0.06), transparent 60%);
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(245, 158, 11, 0.1), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(190, 18, 60, 0.05), transparent 60%);
   background-attachment: fixed;
 }
 
+/* One consistent, visible keyboard focus style everywhere */
+:focus-visible {
+  outline: 2px solid var(--color-amber-500);
+  outline-offset: 2px;
+}
+input:focus-visible, textarea:focus-visible, select:focus-visible { outline-offset: 0; }
+
 mark.hl {
   @apply rounded-sm bg-amber-300/70 px-0.5 text-inherit dark:bg-amber-500/40;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, transparent 25%, rgba(255, 255, 255, 0.08) 50%, transparent 75%);
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
 }
 
 .scrollbar-thin { scrollbar-width: thin; }
@@ -44,5 +66,6 @@ mark.hl {
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }

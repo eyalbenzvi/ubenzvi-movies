@@ -7,6 +7,8 @@
  * part numbers, media type and embeddable Google Drive / Docs URLs.
  */
 import rawCatalog from './catalog.json'
+import docContents from './docContents.json'
+import { parseSegments } from '../lib/docParse.js'
 
 /** Small, stable string hash (FNV-1a) → base36. Used for ids that survive reordering. */
 export function hashString(str) {
@@ -29,19 +31,28 @@ function cleanTitle(title) {
 
 const HEBREW_ORDINALS = { ראשון: 1, שני: 2, שלישי: 3, רביעי: 4, חמישי: 5 }
 
-/** Extract Google file id and resourcekey from a Drive/Docs URL. */
+const GOOGLE_HOSTS = /^(drive|docs)\.google\.com$/
+
+/** Extract Google file id and resourcekey from a Drive/Docs URL. Only https Google hosts are accepted. */
 export function parseGoogleUrl(url) {
   if (!url) return null
   try {
     const u = new URL(url)
+    if (u.protocol !== 'https:' || !GOOGLE_HOSTS.test(u.hostname)) return null
     const m = u.pathname.match(/\/d\/([A-Za-z0-9_-]+)/)
     const id = m ? m[1] : u.searchParams.get('id')
-    if (!id) return null
+    if (!id || !/^[A-Za-z0-9_-]+$/.test(id)) return null
     const kind = u.hostname.startsWith('docs.') ? (u.pathname.split('/')[1] || 'document') : 'file'
+    if (!/^(file|document|spreadsheets|presentation)$/.test(kind)) return null
     return { id, kind, resourceKey: u.searchParams.get('resourcekey') }
   } catch {
     return null
   }
+}
+
+/** The original URL if it is a safe Google link, else null (never put arbitrary URLs in href/src). */
+export function safeGoogleUrl(url) {
+  return parseGoogleUrl(url) ? url : null
 }
 
 function withResourceKey(url, resourceKey) {
@@ -51,7 +62,7 @@ function withResourceKey(url, resourceKey) {
 /** Build an embeddable /preview URL for a Drive file or Google Doc. */
 export function toEmbedUrl(url) {
   const g = parseGoogleUrl(url)
-  if (!g) return url || null
+  if (!g) return null
   if (g.kind === 'file') return withResourceKey(`https://drive.google.com/file/d/${g.id}/preview`, g.resourceKey)
   return withResourceKey(`https://docs.google.com/${g.kind}/d/${g.id}/preview`, g.resourceKey)
 }
@@ -119,9 +130,15 @@ export const movies = rawCatalog.map((row, index) => {
   while (usedIds.has(id)) id = hashString(id + index)
   usedIds.add(id)
 
-  const years = extractYears(title)
-  const year = years.length ? Math.min(...years) : null
   const doc = parseGoogleUrl(row.detailsUrl)
+  let years = extractYears(title)
+  let yearSource = years.length ? 'title' : null
+  // No year in the title → derive it from the dated segments of its "מה בקלטת" document
+  if (!years.length && doc && docContents[doc.id]?.text) {
+    years = [...new Set(parseSegments(docContents[doc.id].text).flatMap((s) => s.years))]
+    if (years.length) yearSource = 'doc'
+  }
+  const year = years.length ? Math.min(...years) : null
 
   return {
     id,
@@ -133,11 +150,12 @@ export const movies = rawCatalog.map((row, index) => {
     type: categorize(title),
     year,
     yearEnd: years.length > 1 ? Math.max(...years) : null,
+    yearSource,
     decade: year ? Math.floor(year / 10) * 10 : null,
-    movieUrl: row.movieUrl || null,
+    movieUrl: safeGoogleUrl(row.movieUrl),
     embedUrl: toEmbedUrl(row.movieUrl),
     thumbnailUrl: toThumbnailUrl(row.movieUrl),
-    detailsUrl: row.detailsUrl || null,
+    detailsUrl: safeGoogleUrl(row.detailsUrl),
     detailsEmbedUrl: toEmbedUrl(row.detailsUrl),
     docId: doc?.id ?? null,
     suggestedTags: suggestTagsFor(title),
