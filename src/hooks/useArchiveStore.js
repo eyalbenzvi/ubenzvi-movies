@@ -12,6 +12,8 @@ const MOVIE_IDS = new Set(movies.map((m) => m.id))
 const DOC_IDS = new Set(movies.map((m) => m.docId).filter(Boolean))
 const ID_RE = { test: (k) => MOVIE_IDS.has(k) }
 const DOC_ID_RE = { test: (k) => DOC_IDS.has(k) }
+const isMomentMap = (v) =>
+  isPlainObject(v) && Object.values(v).every((list) => Array.isArray(list) && list.every((x) => x && typeof x.tag === 'string' && Number.isFinite(x.t)))
 const isRecentList = (v) => Array.isArray(v) && v.every((x) => x && typeof x.id === 'string' && typeof x.at === 'number')
 
 const cleanTag = (t) => String(t ?? '').replace(/\s+/g, ' ').trim().slice(0, 40)
@@ -31,6 +33,8 @@ export function useArchiveStore() {
   const [docText, setDocText] = useLocalStorage('docText', {}, isStringMap)
   const [favorites, setFavorites] = useLocalStorage('favorites', [], isStringArray)
   const [recent, setRecent] = useLocalStorage('recent', [], isRecentList)
+  /** Timestamped tags: { [movieId]: [{ tag, t }] } — t in seconds from the start of the video */
+  const [moments, setMoments] = useLocalStorage('moments', {}, isMomentMap)
 
   /** Remember a movie as recently watched (most recent first). */
   const markViewed = useCallback((movieId) => {
@@ -54,7 +58,7 @@ export function useArchiveStore() {
     [setTagLibrary],
   )
 
-  const addTag = useCallback((movieId, rawTag) => {
+  const addTag = useCallback((movieId, rawTag, t = null) => {
     const tag = cleanTag(rawTag)
     if (!tag) return
     ensureInLibrary(tag)
@@ -63,9 +67,48 @@ export function useArchiveStore() {
       if (cur.includes(tag)) return prev
       return { ...prev, [movieId]: [...cur, tag] }
     })
-  }, [ensureInLibrary, setTagsByMovie])
+    if (Number.isFinite(t) && t >= 0) {
+      const sec = Math.floor(t)
+      setMoments((prev) => {
+        const cur = prev[movieId] || []
+        if (cur.some((m) => m.tag === tag && m.t === sec)) return prev
+        return { ...prev, [movieId]: [...cur, { tag, t: sec }].sort((a, b) => a.t - b.t) }
+      })
+    }
+  }, [ensureInLibrary, setTagsByMovie, setMoments])
+
+  /** Remove one time from a tag (the tag itself stays). */
+  const removeMoment = useCallback((movieId, tag, t) => {
+    setMoments((prev) => {
+      const next = (prev[movieId] || []).filter((m) => !(m.tag === tag && m.t === t))
+      const copy = { ...prev }
+      if (next.length) copy[movieId] = next
+      else delete copy[movieId]
+      return copy
+    })
+  }, [setMoments])
+
+  /** Apply fn(list) → list to every movie's moments, dropping empty lists. */
+  const mapMoments = useCallback((fn) => {
+    setMoments((prev) => {
+      const out = {}
+      for (const [id, list] of Object.entries(prev)) {
+        const next = fn(list)
+        if (next.length) out[id] = next
+      }
+      return out
+    })
+  }, [setMoments])
 
   const removeTag = useCallback((movieId, tag) => {
+    setMoments((prev) => {
+      if (!prev[movieId]) return prev
+      const next = prev[movieId].filter((m) => m.tag !== tag)
+      const copy = { ...prev }
+      if (next.length) copy[movieId] = next
+      else delete copy[movieId]
+      return copy
+    })
     setTagsByMovie((prev) => {
       const next = (prev[movieId] || []).filter((t) => t !== tag)
       const copy = { ...prev }
@@ -73,7 +116,7 @@ export function useArchiveStore() {
       else delete copy[movieId]
       return copy
     })
-  }, [setTagsByMovie])
+  }, [setTagsByMovie, setMoments])
 
   const createTag = useCallback((rawTag) => {
     const tag = cleanTag(rawTag)
@@ -91,7 +134,8 @@ export function useArchiveStore() {
       for (const [id, list] of Object.entries(prev)) out[id] = [...new Set(list.map((t) => (t === oldName ? newName : t)))]
       return out
     })
-  }, [setTagLibrary, setTagsByMovie])
+    mapMoments((list) => list.map((m) => (m.tag === oldName ? { ...m, tag: newName } : m)))
+  }, [setTagLibrary, setTagsByMovie, mapMoments])
 
   /** Delete a tag from the library and from every movie. */
   const deleteTag = useCallback((name) => {
@@ -104,7 +148,8 @@ export function useArchiveStore() {
       }
       return out
     })
-  }, [setTagLibrary, setTagsByMovie])
+    mapMoments((list) => list.filter((m) => m.tag !== name))
+  }, [setTagLibrary, setTagsByMovie, mapMoments])
 
   const setNote = useCallback((movieId, rawText) => {
     const text = String(rawText ?? '').slice(0, 10_000)
@@ -139,7 +184,8 @@ export function useArchiveStore() {
     notes,
     docText,
     favorites,
-  }), [tagLibrary, tagsByMovie, notes, docText, favorites])
+    moments,
+  }), [tagLibrary, tagsByMovie, notes, docText, favorites, moments])
 
   /**
    * Import a backup. mode 'merge' unions tags/favorites and overwrites notes/docText per key;
@@ -154,6 +200,8 @@ export function useArchiveStore() {
     const inNotes = isPlainObject(data.notes) ? stringMap(data.notes, ID_RE, 10_000) : {}
     const inDoc = isPlainObject(data.docText) ? stringMap(data.docText, DOC_ID_RE, 200_000) : {}
     const inFav = Array.isArray(data.favorites) ? data.favorites.filter((x) => typeof x === 'string' && ID_RE.test(x)).slice(0, 1000) : []
+    const inMoments = isPlainObject(data.moments) ? sanitizeMoments(data.moments) : {}
+    for (const [id, list] of Object.entries(inMoments)) inTags[id] = [...new Set([...(inTags[id] || []), ...list.map((m) => m.tag)])]
     const libFromTags = Object.values(inTags).flat()
     const counts = {
       movies: Object.keys(inTags).length,
@@ -161,7 +209,7 @@ export function useArchiveStore() {
       notes: Object.keys(inNotes).length,
       favorites: inFav.length,
     }
-    if (mode === 'replace' && !counts.tags && !counts.notes && !counts.favorites && !Object.keys(inDoc).length) {
+    if (mode === 'replace' && !counts.tags && !counts.notes && !counts.favorites && !Object.keys(inDoc).length && !Object.keys(inMoments).length) {
       throw new Error('קובץ הגיבוי ריק — לא בוצע שינוי')
     }
 
@@ -171,6 +219,7 @@ export function useArchiveStore() {
       setNotes(inNotes)
       setDocText(inDoc)
       setFavorites(inFav)
+      setMoments(inMoments)
     } else {
       setTagsByMovie((prev) => {
         const out = { ...prev }
@@ -181,13 +230,22 @@ export function useArchiveStore() {
       setNotes((prev) => ({ ...prev, ...inNotes }))
       setDocText((prev) => ({ ...prev, ...inDoc }))
       setFavorites((prev) => [...new Set([...prev, ...inFav])])
+      setMoments((prev) => {
+        const out = { ...prev }
+        for (const [id, list] of Object.entries(inMoments)) {
+          const merged = [...(out[id] || [])]
+          for (const m of list) if (!merged.some((x) => x.tag === m.tag && x.t === m.t)) merged.push(m)
+          out[id] = merged.sort((a, b) => a.t - b.t)
+        }
+        return out
+      })
     }
     return counts
-  }, [setTagsByMovie, setTagLibrary, setNotes, setDocText, setFavorites])
+  }, [setTagsByMovie, setTagLibrary, setNotes, setDocText, setFavorites, setMoments])
 
   return {
-    tagsByMovie, allTags, notes, docText, favorites, recent, markViewed,
-    addTag, removeTag, createTag, renameTag, deleteTag,
+    tagsByMovie, allTags, notes, docText, favorites, recent, markViewed, moments,
+    addTag, removeTag, removeMoment, createTag, renameTag, deleteTag,
     setNote, setDocContent, toggleFavorite,
     exportData, importData,
   }
@@ -204,6 +262,19 @@ function stringMap(obj, keyRe, maxLen) {
   return Object.fromEntries(
     safeEntries(obj, keyRe).filter(([, v]) => typeof v === 'string').map(([k, v]) => [k, v.slice(0, maxLen)]),
   )
+}
+function sanitizeMoments(obj) {
+  const out = {}
+  for (const [id, list] of safeEntries(obj, ID_RE)) {
+    if (!Array.isArray(list)) continue
+    const clean = list
+      .slice(0, 500)
+      .filter((m) => m && typeof m.tag === 'string' && Number.isFinite(m.t) && m.t >= 0 && m.t <= 86400)
+      .map((m) => ({ tag: cleanTag(m.tag), t: Math.floor(m.t) }))
+      .filter((m) => m.tag)
+    if (clean.length) out[id] = clean.sort((a, b) => a.t - b.t)
+  }
+  return out
 }
 function sanitizeTagMap(obj) {
   const out = {}

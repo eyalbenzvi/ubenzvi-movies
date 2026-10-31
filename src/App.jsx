@@ -332,6 +332,7 @@ export default function App() {
           parts={partsBySeries.get(openMovie.series) || EMPTY}
           searchTerms={searchTerms}
           tags={tagsByMovie[openMovie.id] || EMPTY}
+          moments={store.moments[openMovie.id] || EMPTY}
           allTags={store.allTags}
           onAddTag={store.addTag}
           onRemoveTag={store.removeTag}

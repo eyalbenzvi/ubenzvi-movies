@@ -7,6 +7,7 @@ import TagEditor from './TagEditor.jsx'
 import Thumbnail from './Thumbnail.jsx'
 import { yearLabel } from './MovieCard.jsx'
 import { parseSegments } from '../lib/docParse.js'
+import { formatTime, withStartTime } from '../lib/time.js'
 
 const DATE_RE = /(\(?\d{1,2}[/.]\d{1,2}[/.]\d{2,4}\)?|\(?\d{1,2}[/.]\d{2,4}\)?|(?<!\d)(?:19|20)\d{2}(?:-(?:19|20)\d{2})?(?!\d))/
 
@@ -157,7 +158,7 @@ function NotesEditor({ movieId, note, onSave }) {
 
 export default function VideoModal({
   movie, onClose, onPrev, onNext, position, parts, onSelect, searchTerms,
-  tags, allTags, onAddTag, onRemoveTag, onTagClick,
+  tags, moments, allTags, onAddTag, onRemoveTag, onTagClick,
   note, onSaveNote, isFavorite, onToggleFavorite,
   docIndexEntry, userDocText, onSaveDocText,
 }) {
@@ -168,9 +169,19 @@ export default function VideoModal({
   ].filter(Boolean)
   const [tab, setTab] = useState(tabs[0].id)
   const [expanded, setExpanded] = useState(false)
+  const [jump, setJump] = useState({ t: 0, n: 0 }) // start time for the player (seconds)
   const scrollRef = useRef(null)
+  const [jumpNote, setJumpNote] = useState(null)
+
+  const jumpTo = useCallback((t) => {
+    setJump((j) => ({ t, n: j.n + 1 }))
+    setJumpNote(formatTime(t))
+    scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [])
 
   useEffect(() => {
+    setJump({ t: 0, n: 0 })
+    setJumpNote(null)
     setTab((t) => (tabs.some((x) => x.id === t) ? t : tabs[0].id))
     scrollRef.current?.scrollTo({ top: 0 })
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -220,7 +231,7 @@ export default function VideoModal({
         <div className="sticky top-0 z-20 bg-white sm:static sm:px-6 dark:bg-stone-900">
           <div className="sm:mx-auto sm:max-w-[calc(56dvh*16/9)]">
           {movie.embedUrl ? (
-            <EmbedFrame key={movie.id} src={movie.embedUrl} title={movie.displayTitle} kind="video" movie={movie} externalUrl={movie.movieUrl} onExpandedChange={onExpandedChange} />
+            <EmbedFrame key={`${movie.id}-${jump.n}`} src={withStartTime(movie.embedUrl, jump.t)} title={movie.displayTitle} kind="video" movie={movie} externalUrl={movie.movieUrl} onExpandedChange={onExpandedChange} />
           ) : (
             <div className="flex aspect-video flex-col items-center justify-center gap-2 bg-stone-100 text-center text-stone-500 sm:rounded-xl dark:bg-stone-950">
               <VideoOff className="size-8 text-amber-500" aria-hidden />
@@ -231,6 +242,11 @@ export default function VideoModal({
         </div>
 
         <div className="space-y-4 px-4 pb-8 pt-4 sm:px-6" style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
+          {jumpNote && (
+            <p className="animate-fade-in text-sm font-medium text-amber-700 dark:text-amber-300" role="status">
+              ▶ הסרטון ינוגן מ-<span dir="ltr" className="tabular-nums">{jumpNote}</span> — לחצו על ניגון
+            </p>
+          )}
           <div>
             <h2 id="movie-modal-title" className="font-display text-xl font-bold leading-tight sm:text-2xl">{movie.displayTitle}</h2>
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-stone-500 dark:text-stone-400">
@@ -288,7 +304,7 @@ export default function VideoModal({
               <div className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-2">
                 <section className="min-w-0">
                   <h3 className="mb-3 flex items-center gap-2 font-semibold"><Tags className="size-4 text-amber-500" aria-hidden /> תגיות</h3>
-                  <TagEditor movie={movie} tags={tags} allTags={allTags} onAdd={onAddTag} onRemove={onRemoveTag} onTagClick={onTagClick} />
+                  <TagEditor movie={movie} tags={tags} moments={moments} allTags={allTags} onAdd={onAddTag} onRemove={onRemoveTag} onTagClick={onTagClick} onJump={jumpTo} />
                   <p className="mt-3 text-xs text-stone-500 dark:text-stone-400">לחיצה על תגית מציגה את כל הסרטים שמתויגים בה.</p>
                 </section>
                 <NotesEditor key={movie.id} movieId={movie.id} note={note} onSave={onSaveNote} />

@@ -1,16 +1,20 @@
-import { Tag, X } from 'lucide-react'
+import { Play, Tag, X } from 'lucide-react'
+import { formatTime } from '../lib/time.js'
 
-/** Interactive tag pill. `onClick` filters by the tag; `onRemove` (optional) adds an ✕ button. */
-export default function TagChip({ name, active = false, count, onClick, onRemove }) {
+/**
+ * Interactive tag pill. `onClick` filters by the tag; `onRemove` (optional) adds an ✕ button.
+ * `times` (seconds) render as "▶ 22:10" buttons that call `onTimeClick(t)`.
+ */
+export default function TagChip({ name, active = false, count, onClick, onRemove, times, onTimeClick }) {
   const tone = active
     ? 'border-amber-500 bg-amber-500 text-stone-950'
     : 'border-stone-300 bg-white/70 text-stone-700 hover:border-amber-500 hover:text-amber-800 dark:border-stone-700 dark:bg-stone-800/60 dark:text-stone-200 dark:hover:border-amber-500/70 dark:hover:text-amber-300'
   return (
-    <span className={`inline-flex h-9 max-w-full items-center rounded-full border text-sm font-medium transition-colors ${tone}`}>
+    <span className={`inline-flex min-h-9 max-w-full flex-wrap items-center rounded-full border text-sm font-medium transition-colors ${tone}`}>
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); onClick?.(name) }}
-        className={`inline-flex h-full min-w-0 items-center gap-1.5 rounded-full ps-3 ${onRemove ? 'pe-1' : 'pe-3'}`}
+        className={`inline-flex h-9 min-w-0 items-center gap-1.5 rounded-full ps-3 ${onRemove || times?.length ? 'pe-1' : 'pe-3'}`}
         title={`הצג את כל הסרטים עם התגית "${name}"`}
         aria-pressed={active}
       >
@@ -18,12 +22,24 @@ export default function TagChip({ name, active = false, count, onClick, onRemove
         <span className="truncate">{name}</span>
         {count != null && <span className={`tabular-nums ${active ? 'text-stone-800' : 'text-stone-500 dark:text-stone-400'}`}>{count}</span>}
       </button>
+      {times?.map((t) => (
+        <button
+          key={t}
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onTimeClick?.(t) }}
+          className="ms-0.5 inline-flex h-7 items-center gap-1 rounded-full bg-amber-500/15 px-2 text-[13px] font-semibold tabular-nums text-amber-800 hover:bg-amber-500/30 dark:text-amber-300"
+          aria-label={`נגן את "${name}" מ-${formatTime(t)}`}
+          title="קפיצה לרגע הזה בסרטון"
+        >
+          <Play className="size-3 fill-current" aria-hidden /> <span dir="ltr">{formatTime(t)}</span>
+        </button>
+      ))}
       {onRemove && (
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onRemove(name) }}
           className="me-0.5 flex size-8 shrink-0 items-center justify-center rounded-full opacity-70 transition hover:bg-black/10 hover:opacity-100 dark:hover:bg-white/10"
-          aria-label={`הסר את התגית ${name}`}
+          aria-label={`הסר את התגית ${name}${times?.length ? ' ואת הזמנים שלה' : ''}`}
         >
           <X className="size-3.5" aria-hidden />
         </button>
