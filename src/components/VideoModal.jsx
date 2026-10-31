@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   AlertCircle, Calendar, ChevronLeft, ChevronRight, ExternalLink, FileText, Heart, Loader2,
-  Pencil, Play, Save, StickyNote, Tags, X,
+  Maximize2, Minimize2, Pencil, Play, Save, StickyNote, Tags, X,
 } from 'lucide-react'
 import TagEditor from './TagEditor.jsx'
 
@@ -11,26 +11,129 @@ const SOURCE_LABEL = {
   auto: 'תקציר אוטומטי (מבוסס על פרטי הקלטת)',
 }
 
+/**
+ * Embedded Drive player / Docs viewer.
+ *
+ * - `sandbox` without allow-popups / allow-top-navigation: Drive's own "open in Drive" (pop-out)
+ *   button and links inside docs can no longer navigate away from the app.
+ * - Our own "מסך מלא" button enlarges the frame inside the app (native fullscreen where the
+ *   browser supports it, CSS full-viewport overlay otherwise, e.g. iPhone). The phone's Back
+ *   button / gesture exits full screen instead of leaving the app.
+ */
 function EmbedFrame({ src, title, kind }) {
   const [loaded, setLoaded] = useState(false)
+  const [expanded, setExpanded] = useState(false)
+  const wrapRef = useRef(null)
+  const pushedRef = useRef(false)
   useEffect(() => setLoaded(false), [src])
+
+  const expand = () => {
+    // Extra history entry (same URL & router state) so Back closes full screen.
+    window.history.pushState(window.history.state, '')
+    pushedRef.current = true
+    setExpanded(true)
+    const el = wrapRef.current
+    const req = el?.requestFullscreen || el?.webkitRequestFullscreen
+    if (req) {
+      Promise.resolve(req.call(el))
+        .then(() => { if (kind === 'video') screen.orientation?.lock?.('landscape').catch(() => {}) })
+        .catch(() => { /* not allowed → CSS overlay only */ })
+    }
+  }
+
+  const collapse = () => {
+    if (pushedRef.current) window.history.back() // → popstate → exitExpanded
+    else exitExpanded()
+  }
+
+  const exitExpanded = () => {
+    pushedRef.current = false
+    setExpanded(false)
+    screen.orientation?.unlock?.()
+    const fsEl = document.fullscreenElement || document.webkitFullscreenElement
+    if (fsEl) (document.exitFullscreen || document.webkitExitFullscreen)?.call(document)?.catch?.(() => {})
+  }
+
+  useEffect(() => {
+    if (!expanded) return
+    const onPop = () => exitExpanded()
+    const onFsChange = () => {
+      // User left native fullscreen (system back / swipe) → also leave the overlay
+      if (!(document.fullscreenElement || document.webkitFullscreenElement)) collapse()
+    }
+    const onKey = (e) => {
+      if (e.key === 'Escape') { e.stopImmediatePropagation(); collapse() }
+    }
+    window.addEventListener('popstate', onPop)
+    window.addEventListener('keydown', onKey, true)
+    document.addEventListener('fullscreenchange', onFsChange)
+    document.addEventListener('webkitfullscreenchange', onFsChange)
+    return () => {
+      window.removeEventListener('popstate', onPop)
+      window.removeEventListener('keydown', onKey, true)
+      document.removeEventListener('fullscreenchange', onFsChange)
+      document.removeEventListener('webkitfullscreenchange', onFsChange)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expanded])
+
+  // Leaving the modal while enlarged: drop native fullscreen
+  useEffect(() => () => {
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+      (document.exitFullscreen || document.webkitExitFullscreen)?.call(document)?.catch?.(() => {})
+    }
+  }, [])
+
+  const frameBox = expanded
+    ? 'fixed inset-0 z-[70] flex flex-col bg-black'
+    : `relative overflow-hidden rounded-xl ${kind === 'doc' ? 'h-[60vh] bg-white' : 'aspect-video bg-black'}`
+
   return (
-    <div className={`relative overflow-hidden rounded-xl bg-black ${kind === 'doc' ? 'h-[60vh] bg-white' : 'aspect-video'}`}>
-      {!loaded && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-stone-400">
-          <Loader2 className="size-8 animate-spin text-amber-500" />
-          <span className="text-sm">טוען…</span>
+    <div ref={wrapRef} className={frameBox}>
+      {expanded && (
+        <div className="flex shrink-0 items-center justify-between gap-2 bg-stone-950 px-3 py-2 text-stone-100" style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }}>
+          <span className="truncate text-sm font-medium">{title}</span>
+          <button
+            type="button"
+            onClick={collapse}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-amber-500 px-3 py-2 text-sm font-semibold text-stone-950 hover:bg-amber-400"
+          >
+            <Minimize2 className="size-4" /> חזרה לאפליקציה
+          </button>
         </div>
       )}
-      <iframe
-        key={src}
-        src={src}
-        title={title}
-        onLoad={() => setLoaded(true)}
-        allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-        referrerPolicy="no-referrer-when-downgrade"
-        className={`absolute inset-0 size-full border-0 transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
-      />
+      <div className={expanded ? 'relative flex-1' : 'absolute inset-0'}>
+        {!loaded && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-stone-400">
+            <Loader2 className="size-8 animate-spin text-amber-500" />
+            <span className="text-sm">טוען…</span>
+          </div>
+        )}
+        <iframe
+          key={src}
+          src={src}
+          title={title}
+          onLoad={() => setLoaded(true)}
+          sandbox="allow-scripts allow-same-origin allow-presentation allow-forms"
+          allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+          referrerPolicy="no-referrer-when-downgrade"
+          className={`absolute inset-0 size-full border-0 transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+        />
+        {kind === 'video' && loaded && (
+          // Covers Drive's own "open in Drive" pop-out button (top-right of the player)
+          <div className="absolute right-0 top-0 z-10 size-16" aria-hidden onClick={(e) => e.preventDefault()} />
+        )}
+        {!expanded && (
+          <button
+            type="button"
+            onClick={expand}
+            className="absolute bottom-2 end-2 inline-flex items-center gap-1.5 rounded-lg bg-black/70 px-2.5 py-1.5 text-xs font-semibold text-white shadow-lg backdrop-blur transition hover:bg-black/85"
+            aria-label="מסך מלא"
+          >
+            <Maximize2 className="size-4" /> מסך מלא
+          </button>
+        )}
+      </div>
     </div>
   )
 }
@@ -209,7 +312,7 @@ export default function VideoModal({
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <p className="flex items-start gap-2 text-xs leading-relaxed text-stone-500 dark:text-stone-400">
                       <AlertCircle className="mt-0.5 size-4 shrink-0 text-amber-500" />
-                      הנגן מוטמע מ-Google Drive. אם הסרטון לא מוצג (הרשאות שיתוף, קובץ גדול או עיבוד שטרם הסתיים) — פתחו אותו בחלון חדש.
+                      להגדלה השתמשו בכפתור "מסך מלא" — כך נשארים באפליקציה. אם הסרטון לא מוצג (הרשאות שיתוף או קובץ שטרם עובד) — פתחו אותו ב-Google Drive.
                     </p>
                     <div className="flex shrink-0 flex-wrap gap-2">
                       {movie.detailsUrl && (
@@ -217,7 +320,7 @@ export default function VideoModal({
                           <FileText className="size-4" /> מה בקלטת
                         </button>
                       )}
-                      <OpenButton href={movie.movieUrl} primary>פתח בחלון חדש</OpenButton>
+                      <OpenButton href={movie.movieUrl}>פתח ב-Google Drive</OpenButton>
                     </div>
                   </div>
                 </>
@@ -235,7 +338,7 @@ export default function VideoModal({
             <div className="animate-fade-in space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-sm text-stone-600 dark:text-stone-300">פירוט תוכן הקלטת ("מה בקלטת") — מסמך Google Docs.</p>
-                <OpenButton href={movie.detailsUrl} primary>פתח את המסמך בחלון חדש</OpenButton>
+                <OpenButton href={movie.detailsUrl}>פתח ב-Google Docs</OpenButton>
               </div>
               <EmbedFrame src={movie.detailsEmbedUrl} title={`מה בקלטת – ${movie.displayTitle}`} kind="doc" />
               <DocContentEditor movie={movie} indexEntry={docIndexEntry} userText={userDocText} onSave={onSaveDocText} />
