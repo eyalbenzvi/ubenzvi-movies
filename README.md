@@ -33,7 +33,7 @@ npm run preview    # serve the production build locally
 The build uses a **relative base (`./`)** and a **HashRouter** (`/#/movie/abc`), so it works in a
 sub-path (`https://<user>.github.io/<repo>/`) *and* on a custom domain, and refreshing any page never 404s.
 
-**Option A — GitHub Actions (recommended).** `.github/workflows/deploy.yml` builds and deploys on every push to `main`.
+**Option A — GitHub Actions (recommended).** `.github/workflows/deploy.yml` builds and deploys on every push to `main` (or to the `ccr-b3965374-zsn143` working branch).
 1. Push the repo to GitHub.
 2. *Settings → Pages → Build and deployment → Source:* **GitHub Actions**.
 3. Push to `main` (or run the workflow manually from the *Actions* tab).
