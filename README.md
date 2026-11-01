@@ -22,6 +22,12 @@ Built with **React 19 + Vite + Tailwind CSS v4 + Lucide icons**, deployed to **G
   player shows (2210 → 22:10) and what happens. Moments are listed like chapters, editable, searchable,
   and open the video at that time (`#/movie/<id>?t=1330`). The app can't read Google's player position,
   so the time is typed by the user.
+- **Download** — signed in: the full original file from Drive (via the service worker, original file
+  name); otherwise Drive's own download page.
+- **Clip cutting (גזירת קטע)** — signed in: choose start/end, the segment is played and recorded in the
+  browser (canvas + Web Audio + MediaRecorder; real time, re-encoded, max 15 min), then saved or shared.
+  The source files are too large to re-mux in a phone browser, hence recording.
+- **"הרגעים שלי"** shelf with every moment across the archive; moments are also found by the movie title.
 - **Tags, notes, favorites, history** in `localStorage`, with JSON backup export/import (validated).
 - **Dark (default) & light themes**, keyboard & screen-reader friendly, respects reduced motion.
 

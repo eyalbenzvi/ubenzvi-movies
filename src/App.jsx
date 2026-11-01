@@ -9,7 +9,7 @@ import MovieListItem from './components/MovieListItem.jsx'
 import VideoModal from './components/VideoModal.jsx'
 import TagManager from './components/TagManager.jsx'
 import Toast from './components/Toast.jsx'
-import { Hero, Row } from './components/HomeRows.jsx'
+import { Hero, MomentShelf, Row } from './components/HomeRows.jsx'
 import { movies, moviesById, stats } from './data/movies.js'
 import { docIndex } from './data/docIndex.js'
 import { buildIndex, parseQuery, search } from './lib/search.js'
@@ -217,6 +217,10 @@ export default function App() {
   }, [store])
 
   // ---- Home rows ---------------------------------------------------------
+  const allMoments = useMemo(
+    () => naturalOrder.flatMap((m) => (store.moments[m.id] || EMPTY).map((mo) => ({ movie: m, tag: mo.tag, t: mo.t }))),
+    [store.moments],
+  )
   const recentSet = useMemo(() => new Set(recent.slice(0, 12).map((r) => r.id)), [recent])
   const rows = useMemo(() => {
     if (!showHome) return []
@@ -292,6 +296,7 @@ export default function App() {
 
         {showHome ? (
           <div className="space-y-7 sm:space-y-10">
+            <MomentShelf items={allMoments} onOpen={open} />
             {rows.map((r) => (
               <Row key={r.key} title={r.title} movies={r.items} onSeeAll={r.seeAll} cardProps={itemProps} />
             ))}

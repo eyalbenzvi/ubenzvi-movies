@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { BookmarkPlus, Check, ChevronLeft, Maximize2, ChevronRight, ExternalLink, FileText, Heart, Layers, Pencil, StickyNote, Tags, VideoOff, X } from 'lucide-react'
+import { BookmarkPlus, Check, ChevronLeft, Download, Maximize2, Scissors, ChevronRight, ExternalLink, FileText, Heart, Layers, Pencil, StickyNote, Tags, VideoOff, X } from 'lucide-react'
 import EmbedFrame from './EmbedFrame.jsx'
 import Highlight from './Highlight.jsx'
 import Sheet from './Sheet.jsx'
@@ -7,6 +7,7 @@ import TagEditor from './TagEditor.jsx'
 import MomentComposer from './MomentComposer.jsx'
 import MomentList from './MomentList.jsx'
 import GoogleButton from './GoogleButton.jsx'
+import ClipPanel from './ClipPanel.jsx'
 import Thumbnail from './Thumbnail.jsx'
 import { yearLabel } from './MovieCard.jsx'
 import { parseSegments } from '../lib/docParse.js'
@@ -178,6 +179,7 @@ export default function VideoModal({
   const scrollRef = useRef(null)
   const [barNote, setBarNote] = useState(null) // { kind: 'jump' | 'saved', label?, t }
   const [composerOpen, setComposerOpen] = useState(false)
+  const [clipOpen, setClipOpen] = useState(false)
   const auth = useGoogleAuth()
   const [nativeFailed, setNativeFailed] = useState(false)
   const videoRef = useRef(null)
@@ -208,6 +210,7 @@ export default function VideoModal({
     setJump((j) => ({ t: startAt || 0, n: j.n + 1 }))
     setBarNote(startAt ? { kind: 'jump', t: startAt } : null)
     setComposerOpen(false)
+    setClipOpen(false)
     setNativeFailed(false)
     setTab((t) => (tabs.some((x) => x.id === t) ? t : tabs[0].id))
     scrollRef.current?.scrollTo({ top: 0 })
@@ -303,7 +306,7 @@ export default function VideoModal({
               renderBar={({ expand, expanded: isFull }) => (
                 <>
                   <div className="flex h-14 items-center gap-2 border-b border-line px-3 sm:px-0">
-                    <button type="button" onClick={() => { if (!composerOpen) videoRef.current?.pause?.(); setComposerOpen((v) => !v) }} aria-expanded={composerOpen}
+                    <button type="button" onClick={() => { if (!composerOpen) videoRef.current?.pause?.(); setClipOpen(false); setComposerOpen((v) => !v) }} aria-expanded={composerOpen}
                       className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-amber-500 px-4 text-sm font-semibold text-stone-950 ring-1 ring-black/10 hover:bg-amber-400 dark:ring-0">
                       <BookmarkPlus className="size-4" aria-hidden /> סמן רגע
                     </button>
@@ -321,6 +324,9 @@ export default function VideoModal({
                       </span>
                       <GoogleButton onClick={auth.signIn} label={auth.status === 'expired' ? 'התחברות מחדש' : 'התחברות עם Google'} />
                     </div>
+                  )}
+                  {clipOpen && !isFull && (
+                    <ClipPanel movie={movie} videoRef={videoRef} canRecord={useNative} auth={auth} onClose={() => setClipOpen(false)} />
                   )}
                   {composerOpen && !isFull && (
                     <MomentComposer movie={movie} moments={moments} tags={tags} allTags={allTags} onSave={saveMoment} onClose={() => setComposerOpen(false)} autoFocus getNow={getNow} />
@@ -352,6 +358,27 @@ export default function VideoModal({
             <button type="button" onClick={() => onToggleFavorite(movie.id)} aria-pressed={isFavorite} className={`inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm font-semibold transition ${isFavorite ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400' : 'bg-surface-2 text-ink hover:bg-line'}`}>
               <Heart className={`size-4 ${isFavorite ? 'fill-current' : ''}`} aria-hidden /> {isFavorite ? 'במועדפים' : 'הוספה למועדפים'}
             </button>
+            {movie.streamUrl && (
+              <button type="button" onClick={() => { setComposerOpen(false); setClipOpen((v) => !v); scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' }) }} aria-expanded={clipOpen}
+                className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-surface-2 px-4 text-sm font-semibold text-ink hover:bg-line">
+                <Scissors className="size-4" aria-hidden /> גזירת קטע
+              </button>
+            )}
+            {movie.streamUrl && (useNative ? (
+              // A plain navigation (not the download attribute) so the service worker handles it;
+              // its "Content-Disposition: attachment" makes the browser save the file and stay on the page
+              <a href={`${movie.streamUrl}${movie.streamUrl.includes('?') ? '&' : '?'}download=1`}
+                className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-surface-2 px-4 text-sm font-semibold text-ink hover:bg-line"
+                title="הורדת הסרט המלא למכשיר">
+                <Download className="size-4" aria-hidden /> הורדה
+              </a>
+            ) : (
+              <a href={movie.driveDownloadUrl} target="_blank" rel="noopener noreferrer"
+                className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-surface-2 px-4 text-sm font-semibold text-ink hover:bg-line"
+                title="הורדה דרך Google Drive">
+                <Download className="size-4" aria-hidden /> הורדה
+              </a>
+            ))}
             {movie.movieUrl && (
               <a href={movie.movieUrl} target="_blank" rel="noopener noreferrer" className="ms-auto inline-flex size-10 shrink-0 items-center justify-center rounded-full text-muted hover:bg-surface-2 hover:text-ink" aria-label="פתח ב-Google Drive" title="פתח ב-Google Drive">
                 <ExternalLink className="size-5" aria-hidden />

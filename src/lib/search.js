@@ -161,7 +161,11 @@ export function search(index, query) {
       snippet = { field: 'doc', text: makeSnippet(entry.raw.docText, terms) }
     }
     // Timestamped tags that match → the result can open the video at that moment
-    const moments = (entry.raw.moments || []).filter((mo) => terms.some((t) => termIn(normalize(mo.tag), t)))
+    // A moment is found by its own words AND by the movie's title ("איטליה אגם", or just "איטליה")
+    const moments = (entry.raw.moments || []).filter((mo) => {
+      const label = normalize(mo.tag)
+      return terms.every((t) => termIn(label, t) || termIn(entry.title, t))
+    })
     results.set(entry.movie.id, { score, fields, snippet, terms, moments })
   }
   return results

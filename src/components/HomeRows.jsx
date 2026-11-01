@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import { ChevronLeft, ChevronRight, FileText, Play, Shuffle } from 'lucide-react'
 import MovieCard, { yearLabel } from './MovieCard.jsx'
 import Thumbnail from './Thumbnail.jsx'
+import { formatTime } from '../lib/time.js'
 
 /** Big featured banner at the top of the home screen. */
 export function Hero({ movie, segments, onOpen, onShuffle }) {
@@ -74,6 +75,38 @@ export function Row({ title, movies, onSeeAll, cardProps }) {
         <button type="button" onClick={() => scroll(1)} tabIndex={-1} aria-hidden className="absolute -end-4 top-0 hidden h-[126px] w-10 lg:h-[135px] items-center justify-center rounded-s-xl bg-black/50 text-white opacity-0 transition hover:bg-black/70 can-hover:flex can-hover:group-hover/row:opacity-100">
           <ChevronLeft className="size-6" />
         </button>
+      </div>
+    </section>
+  )
+}
+
+/** "הרגעים שלי" — every timestamped tag across the archive; tap opens the movie at that moment. */
+export function MomentShelf({ items, onOpen }) {
+  if (!items.length) return null
+  return (
+    <section aria-label="הרגעים שלי">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h2 className="font-display text-xl font-semibold leading-7 sm:text-2xl">
+          הרגעים שלי
+          <span className="ms-1.5 rounded-full bg-surface-2 px-1.5 py-0.5 align-middle font-sans text-xs font-medium tabular-nums text-muted">{items.length}</span>
+        </h2>
+      </div>
+      <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory scroll-px-4 gap-2.5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:scroll-px-0 sm:gap-3 sm:px-0">
+        {items.map(({ movie, tag, t }) => (
+          <button key={`${movie.id}-${tag}-${t}`} type="button" onClick={() => onOpen(movie, t)}
+            className="group w-[42vw] shrink-0 snap-start text-start sm:w-56 lg:w-60"
+            aria-label={`${tag} · ${formatTime(t)} · ${movie.displayTitle}`}>
+            <span className="relative block aspect-video overflow-hidden rounded-xl ring-1 ring-black/5 dark:ring-white/5">
+              <Thumbnail movie={movie} className="size-full" />
+              <span className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent" />
+              <span dir="ltr" className="absolute bottom-1.5 start-1.5 inline-flex items-center gap-1 rounded-md bg-amber-500 px-1.5 py-0.5 text-xs font-semibold tabular-nums text-stone-950">
+                <Play className="size-3 fill-current" aria-hidden />{formatTime(t)}
+              </span>
+            </span>
+            <span className="mt-2 block truncate text-sm font-semibold text-ink">{tag}</span>
+            <span className="block truncate text-xs text-muted">{movie.displayTitle}</span>
+          </button>
+        ))}
       </div>
     </section>
   )

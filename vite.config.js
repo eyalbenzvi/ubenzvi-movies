@@ -13,7 +13,7 @@ const CSP = [
   "frame-src https://drive.google.com https://docs.google.com https://accounts.google.com/gsi/",
   "connect-src 'self' https://www.googleapis.com https://accounts.google.com/gsi/",
   "manifest-src 'self'",
-  "media-src 'self'",
+  "media-src 'self' blob:",
   "object-src 'none'",
   "worker-src 'self'",
   "base-uri 'none'",

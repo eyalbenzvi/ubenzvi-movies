@@ -45,21 +45,29 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return
   const m = url.pathname.match(/\/drive-stream\/([A-Za-z0-9_-]{10,100})$/)
   if (!m || event.request.method !== 'GET') return
-  event.respondWith(stream(m[1], url.searchParams.get('rk'), event.request))
+  event.respondWith(stream(m[1], url.searchParams.get('rk'), event.request, url.searchParams.has('download')))
 })
 
-const sizes = new Map() // fileId → total bytes (Drive does not expose Content-Range to CORS readers)
+const meta = new Map() // fileId → { size, name, mimeType } (Drive does not expose Content-Range to CORS readers)
 
-async function fileSize(fileId, headers) {
-  if (sizes.has(fileId)) return sizes.get(fileId)
-  const res = await fetch(`${API}${fileId}?fields=size&supportsAllDrives=true`, { headers })
+async function fileMeta(fileId, headers) {
+  if (meta.has(fileId)) return meta.get(fileId)
+  const res = await fetch(`${API}${fileId}?fields=size,name,mimeType&supportsAllDrives=true`, { headers })
   if (!res.ok) return null
-  const size = Number((await res.json()).size)
-  if (Number.isFinite(size) && size > 0) sizes.set(fileId, size)
-  return sizes.get(fileId) ?? null
+  const j = await res.json()
+  const size = Number(j.size)
+  const info = { size: Number.isFinite(size) && size > 0 ? size : null, name: j.name || '', mimeType: j.mimeType || '' }
+  meta.set(fileId, info)
+  return info
 }
 
-async function stream(fileId, resourceKey, request) {
+/** RFC 5987 header for a (Hebrew) file name. */
+function attachment(name) {
+  const safe = String(name || 'video.mp4').replace(/[\\/:*?"<>|\r\n]+/g, ' ').trim() || 'video.mp4'
+  return `attachment; filename="video${(safe.match(/\.[A-Za-z0-9]{2,4}$/) || ['.mp4'])[0]}"; filename*=UTF-8''${encodeURIComponent(safe)}`
+}
+
+async function stream(fileId, resourceKey, request, download = false) {
   let t = token && Date.now() < expiresAt - 30_000 ? token : await askPagesForToken()
   if (!t) {
     notifyPages('token-expired')
@@ -68,8 +76,9 @@ async function stream(fileId, resourceKey, request) {
   const auth = { Authorization: `Bearer ${t}` }
   if (resourceKey && /^[A-Za-z0-9_-]{1,100}$/.test(resourceKey)) auth['X-Goog-Drive-Resource-Keys'] = `${fileId}/${resourceKey}`
 
-  const size = await fileSize(fileId, auth)
-  const m = /^bytes=(\d+)-(\d*)$/.exec(request.headers.get('range') || '')
+  const info = await fileMeta(fileId, auth)
+  const size = info?.size ?? null
+  const m = download ? null : /^bytes=(\d+)-(\d*)$/.exec(request.headers.get('range') || '')
   const headers = { ...auth }
   let start = 0
   let end = size != null ? size - 1 : null
@@ -88,6 +97,7 @@ async function stream(fileId, resourceKey, request) {
     'Accept-Ranges': 'bytes',
     'Cache-Control': 'no-store',
   })
+  if (download) out.set('Content-Disposition', attachment(info?.name))
   if (size != null) out.set('Content-Length', String(end - start + 1))
   if (m && size != null) {
     out.set('Content-Range', `bytes ${start}-${end}/${size}`)

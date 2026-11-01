@@ -9,6 +9,7 @@ export const MAX_IMPORT_BYTES = 5 * 1024 * 1024
 
 // Imported keys must be real ids from the catalog (rejects __proto__, constructor and junk)
 const MOVIE_IDS = new Set(movies.map((m) => m.id))
+const MOVIE_TITLES = new Map(movies.map((m) => [m.id, m.displayTitle]))
 const DOC_IDS = new Set(movies.map((m) => m.docId).filter(Boolean))
 const ID_RE = { test: (k) => MOVIE_IDS.has(k) }
 const DOC_ID_RE = { test: (k) => DOC_IDS.has(k) }
@@ -208,7 +209,8 @@ export function useArchiveStore() {
     notes,
     docText,
     favorites,
-    moments,
+    // movieTitle is informational (makes the backup readable); import uses only tag + t
+    moments: Object.fromEntries(Object.entries(moments).map(([id, list]) => [id, list.map((m) => ({ ...m, movieTitle: MOVIE_TITLES.get(id) || '' }))])),
   }), [tagLibrary, tagsByMovie, notes, docText, favorites, moments])
 
   /**

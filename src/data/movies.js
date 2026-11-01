@@ -67,6 +67,13 @@ export function toEmbedUrl(url) {
   return withResourceKey(`https://docs.google.com/${g.kind}/d/${g.id}/preview`, g.resourceKey)
 }
 
+/** Google Drive's own download page (used when not signed in). */
+export function toDriveDownloadUrl(url) {
+  const g = parseGoogleUrl(url)
+  if (!g || g.kind !== 'file') return null
+  return `https://drive.google.com/uc?export=download&id=${g.id}${g.resourceKey ? `&resourcekey=${encodeURIComponent(g.resourceKey)}` : ''}`
+}
+
 /** Same-origin URL handled by public/sw.js (Drive API stream with the signed-in user's token). */
 export function toStreamUrl(url) {
   const g = parseGoogleUrl(url)
@@ -162,6 +169,7 @@ export const movies = rawCatalog.map((row, index) => {
     movieUrl: safeGoogleUrl(row.movieUrl),
     embedUrl: toEmbedUrl(row.movieUrl),
     streamUrl: toStreamUrl(row.movieUrl),
+    driveDownloadUrl: toDriveDownloadUrl(row.movieUrl),
     thumbnailUrl: toThumbnailUrl(row.movieUrl),
     detailsUrl: safeGoogleUrl(row.detailsUrl),
     detailsEmbedUrl: toEmbedUrl(row.detailsUrl),
