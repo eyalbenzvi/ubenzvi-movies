@@ -32,7 +32,7 @@ export default function Thumbnail({ movie, className = '', iconClass = 'size-8',
             src={movie.thumbnailUrl}
             alt=""
             aria-hidden
-            className={`absolute inset-0 size-full scale-125 object-cover blur-xl transition-opacity duration-500 ${state === 'loaded' ? 'opacity-50' : 'opacity-0'}`}
+            className={`absolute inset-0 size-full scale-125 object-cover blur-xl transition-opacity duration-300 ease-[var(--ease-out)] ${state === 'loaded' ? 'opacity-50' : 'opacity-0'}`}
             referrerPolicy="no-referrer"
           />
           <img
@@ -43,7 +43,7 @@ export default function Thumbnail({ movie, className = '', iconClass = 'size-8',
             referrerPolicy="no-referrer"
             onError={() => setState('failed')}
             onLoad={(e) => setState(e.currentTarget.naturalWidth < 20 ? 'failed' : 'loaded')}
-            className={`absolute inset-0 size-full scale-[1.12] object-cover transition-[opacity,transform] duration-700 ease-out can-hover:group-hover:scale-[1.15] ${state === 'loaded' ? 'opacity-100' : 'opacity-0'}`}
+            className={`absolute inset-0 size-full scale-[1.12] object-cover transition-[opacity,scale] duration-300 ease-[var(--ease-out)] can-hover:group-hover:scale-[1.15] ${state === 'loaded' ? 'opacity-100' : 'opacity-0'}`}
           />
         </>
       )}

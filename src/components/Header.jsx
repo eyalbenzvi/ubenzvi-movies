@@ -11,7 +11,7 @@ const Header = forwardRef(function Header({ query, onQueryChange, theme, onToggl
 
   return (
     <header
-      className={`sticky top-0 z-30 border-b border-line/80 bg-paper/90 transition-transform duration-300 ${hidden ? '-translate-y-full' : ''}`}
+      className={`sticky top-0 z-30 border-b border-line/80 bg-paper/90 transition-transform duration-200 ease-[var(--ease-out)] ${hidden ? '-translate-y-full' : ''}`}
       style={{ paddingTop: 'env(safe-area-inset-top)' }}
     >
       <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2 sm:flex-nowrap sm:py-3 lg:px-8">
@@ -96,7 +96,7 @@ function AccountButton() {
           : <span className="grid size-8 place-items-center rounded-full bg-amber-500 text-sm font-bold text-stone-950">{(u.name || '?').slice(0, 1)}</span>}
       </button>
       {open && (
-        <div role="menu" className="absolute end-0 top-full z-40 mt-1 w-64 animate-fade-in rounded-2xl border border-line bg-surface p-2 shadow-xl">
+        <div role="menu" className="absolute end-0 top-full z-40 mt-1 w-64 origin-top-left transition-[opacity,scale] duration-150 ease-[var(--ease-out)] starting:scale-[0.97] starting:opacity-0 rounded-2xl border border-line bg-surface p-2 shadow-xl">
           <div className="px-2 py-1.5">
             <p className="truncate font-semibold">{u.name}</p>
             <p className="truncate text-sm text-muted" dir="ltr">{u.email}</p>

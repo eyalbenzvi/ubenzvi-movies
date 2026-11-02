@@ -84,7 +84,7 @@ export default function MomentComposer({ movie, moments, tags, allTags, onSave, 
             className={`h-12 w-full min-w-0 rounded-2xl border px-3 text-base outline-none transition focus:ring-2 ${error?.field === 'label' ? 'border-rose-500' : ''} ${inputTone}`}
           />
           {options.length > 0 && (
-            <ul className={`absolute inset-x-0 top-full z-10 mt-1 overflow-hidden rounded-2xl border p-1 shadow-xl ${dark ? 'border-stone-700 bg-stone-900' : 'border-line bg-surface'}`}>
+            <ul className={`absolute inset-x-0 top-full z-10 mt-1 origin-top overflow-hidden transition-[opacity,scale] duration-150 ease-[var(--ease-out)] starting:scale-[0.97] starting:opacity-0 rounded-2xl border p-1 shadow-xl ${dark ? 'border-stone-700 bg-stone-900' : 'border-line bg-surface'}`}>
               {options.map((o) => (
                 <li key={o}>
                   <button type="button" onMouseDown={(e) => { e.preventDefault(); setLabel(o) }} className={`w-full rounded-lg px-3 py-2.5 text-start text-sm ${dark ? 'hover:bg-stone-800' : 'hover:bg-surface-2'}`}>{o}</button>

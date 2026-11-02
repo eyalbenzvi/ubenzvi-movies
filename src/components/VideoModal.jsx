@@ -414,12 +414,12 @@ export default function VideoModal({
               >
                 <Icon className="size-4" aria-hidden /> {label}
                 {badge && <span className="grid h-5 min-w-5 place-items-center rounded-full bg-amber-500/20 px-1 text-xs tabular-nums">{badge}</span>}
-                <span className={`absolute inset-x-3 -bottom-px h-[3px] rounded-full bg-amber-500 transition-transform duration-300 ${tab === id ? 'scale-x-100' : 'scale-x-0'}`} />
+                <span className={`absolute inset-x-3 -bottom-px h-[3px] rounded-full bg-amber-500 transition-transform duration-200 ease-[var(--ease-out)] ${tab === id ? 'scale-x-100' : 'scale-x-0'}`} />
               </button>
             ))}
           </div>
 
-          <div id={`panel-${tab}`} role="tabpanel" aria-labelledby={`tab-${tab}`} className="min-w-0 animate-fade-in">
+          <div id={`panel-${tab}`} role="tabpanel" aria-labelledby={`tab-${tab}`} className="min-w-0">
             {tab === 'details' && movie.detailsUrl && (
               <DetailsPanel key={movie.docId} movie={movie} docIndexEntry={docIndexEntry} userDocText={userDocText} onSaveDocText={onSaveDocText} terms={searchTerms} />
             )}

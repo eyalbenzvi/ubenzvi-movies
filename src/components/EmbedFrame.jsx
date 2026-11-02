@@ -154,7 +154,7 @@ export default function EmbedFrame({ src, title, kind, movie, externalUrl, onExp
             title={title}
             onLoadedMetadata={(e) => { if (startAt) e.currentTarget.currentTime = startAt; setLoaded(true) }}
             onError={() => onNativeError?.()}
-            className={`absolute inset-0 size-full bg-black transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+            className={`absolute inset-0 size-full bg-black transition-opacity duration-300 ease-[var(--ease-out)] ${loaded ? 'opacity-100' : 'opacity-0'}`}
           />
         ) : (
         <iframe
@@ -165,7 +165,7 @@ export default function EmbedFrame({ src, title, kind, movie, externalUrl, onExp
             sandbox="allow-scripts allow-same-origin allow-presentation"
             allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
             referrerPolicy="strict-origin-when-cross-origin"
-            className={`absolute inset-0 size-full border-0 transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+            className={`absolute inset-0 size-full border-0 transition-opacity duration-300 ease-[var(--ease-out)] ${loaded ? 'opacity-100' : 'opacity-0'}`}
           />
         )}
         {!isDoc && loaded && !nativeSrc && (

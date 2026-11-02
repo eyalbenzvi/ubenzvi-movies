@@ -20,12 +20,12 @@ export default function MovieCard({ movie, match, tags, isFavorite, watched, onO
       <button
         type="button"
         onClick={() => onOpen(movie, match?.moments?.[0]?.t)}
-        className="relative block aspect-video w-full overflow-hidden rounded-2xl bg-stone-900 text-start ring-1 ring-black/5 transition-all duration-300 can-hover:group-hover:ring-amber-500/50 dark:ring-white/5"
+        className="relative block aspect-video w-full overflow-hidden rounded-2xl bg-stone-900 text-start ring-1 ring-black/5 transition-[box-shadow,color] duration-200 can-hover:group-hover:ring-amber-500/50 dark:ring-white/5"
         aria-label={`${movie.displayTitle}${year ? `, ${year}` : ''}`}
       >
         <Thumbnail movie={movie} className="size-full" />
 
-        <span className="absolute inset-0 m-auto flex size-12 scale-90 items-center justify-center rounded-full bg-white/95 text-stone-950 opacity-0 transition-all duration-300 can-hover:group-hover:scale-100 can-hover:group-hover:opacity-100">
+        <span className="absolute inset-0 m-auto flex size-12 scale-90 items-center justify-center rounded-full bg-white/95 text-stone-950 opacity-0 transition-[opacity,scale] duration-200 ease-[var(--ease-out)] can-hover:group-hover:scale-100 can-hover:group-hover:opacity-100">
           <Play className="size-5 fill-current" aria-hidden />
         </span>
 

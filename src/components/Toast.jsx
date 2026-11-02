@@ -10,7 +10,7 @@ export default function Toast({ message, onDone, duration = 4000 }) {
   if (!message) return null
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[80] flex justify-center p-4" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
-      <div role="status" className="pointer-events-auto animate-pop-in rounded-2xl bg-stone-900 px-4 py-3 text-sm font-medium text-white shadow-2xl ring-1 ring-white/10 dark:bg-surface-2 dark:text-stone-900">
+      <div role="status" className="pointer-events-auto transition-[opacity,translate] duration-200 ease-[var(--ease-out)] starting:translate-y-2 starting:opacity-0 rounded-2xl bg-stone-900 px-4 py-3 text-sm font-medium text-white shadow-2xl ring-1 ring-white/10 dark:bg-surface-2 dark:text-stone-900">
         {message}
       </div>
     </div>

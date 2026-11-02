@@ -51,20 +51,26 @@ export default function Sheet({ onClose, labelledBy, children, full = false, max
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  // --- swipe down to close (touch / pen only) ---
+  // --- swipe down to close (touch / pen only), following Vaul's physics ---
   const onPointerDown = (e) => {
+    if (drag.current) return // multi-touch protection: ignore a second finger
     if (e.pointerType === 'mouse' || !e.target.closest('[data-sheet-drag]')) return
     if (e.target.closest('button,a,input,select,textarea')) return
-    drag.current = { y: e.clientY, id: e.pointerId }
+    drag.current = { y: e.clientY, id: e.pointerId, t: performance.now() }
+    e.currentTarget.setPointerCapture?.(e.pointerId) // keep dragging even if the finger leaves the handle
   }
   const onPointerMove = (e) => {
     if (!drag.current || drag.current.id !== e.pointerId) return
-    setDragY(Math.max(0, e.clientY - drag.current.y))
+    const dy = e.clientY - drag.current.y
+    // Friction instead of a hard stop: dragging up moves less and less
+    setDragY(dy >= 0 ? dy : -Math.sqrt(-dy) * 2)
   }
-  const onPointerUp = () => {
-    if (!drag.current) return
+  const onPointerUp = (e) => {
+    if (!drag.current || (e && drag.current.id !== e.pointerId)) return
+    const elapsed = Math.max(1, performance.now() - drag.current.t)
     drag.current = null
-    if (dragY > 110) onClose()
+    const velocity = dragY / elapsed // px per ms
+    if (dragY > 110 || (dragY > 10 && velocity > 0.11)) onClose() // a quick flick is enough
     else setDragY(0)
   }
 
@@ -81,8 +87,8 @@ export default function Sheet({ onClose, labelledBy, children, full = false, max
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
-        style={dragY ? { transform: `translateY(${dragY}px)`, transition: 'none' } : undefined}
-        className={`relative flex w-full animate-sheet-up flex-col overflow-hidden border-line bg-surface shadow-2xl outline-none transition-transform duration-300 sm:animate-pop-in sm:rounded-3xl sm:border ${
+        style={dragY ? { transform: `translateY(${dragY}px)`, transition: 'none' } : { transition: 'transform 400ms var(--ease-drawer)' }}
+        className={`relative flex w-full animate-sheet-up flex-col overflow-hidden border-line bg-surface shadow-2xl outline-none sm:animate-pop-in sm:rounded-3xl sm:border ${
           full ? 'h-dvh max-sm:rounded-none sm:h-auto sm:max-h-[94dvh]' : 'max-h-[92dvh] rounded-t-3xl border-t'
         } ${maxWidth} ${className}`}
       >

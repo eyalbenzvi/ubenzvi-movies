@@ -152,7 +152,7 @@ export default function ClipPanel({ movie, videoRef, canRecord, auth, onClose })
             <span className="tabular-nums text-muted">{Math.round(progress.p * 100)}%</span>
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-surface-2">
-            <div className="h-full rounded-full bg-amber-500 transition-[width] duration-500" style={{ width: `${progress.p * 100}%` }} />
+            <div className="h-full w-full origin-right rounded-full bg-amber-500 transition-transform duration-500 ease-linear" style={{ transform: `scaleX(${progress.p})` }} />
           </div>
           <p className="text-sm font-medium text-accent-ink">השאירו את הדף פתוח והמסך דולק עד הסוף — מעבר לאפליקציה אחרת או נעילת המסך יעצרו את ההקלטה.</p>
           <button type="button" onClick={() => abortRef.current?.abort()} className="h-10 rounded-2xl px-3 text-sm font-semibold text-rose-600 hover:bg-rose-500/10 dark:text-rose-400">ביטול</button>

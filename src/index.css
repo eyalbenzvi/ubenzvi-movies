@@ -34,9 +34,14 @@
   --color-accent-ink: #81600f;
   --color-focus: #81600f;
 
-  --animate-fade-in: fade-in 0.2s ease-out both;
-  --animate-pop-in: pop-in 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  --animate-sheet-up: sheet-up 0.3s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  /* emil-design-eng: strong custom curves (built-in CSS easings are too weak) */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  --animate-fade-in: fade-in 0.18s var(--ease-out) both;
+  --animate-pop-in: pop-in 0.22s var(--ease-out) both;
+  --animate-sheet-up: sheet-up 0.4s var(--ease-drawer) both;
   --animate-rise: rise 0.3s ease-out both;
   --animate-shimmer: shimmer 1.4s linear infinite;
 }
@@ -85,6 +90,19 @@ body {
 input:focus-visible, textarea:focus-visible, select:focus-visible { outline-offset: 0; }
 
 .font-display { font-feature-settings: "lnum"; }
+
+/* emil-design-eng: every pressable element answers the press (subtle, fast, ease-out) */
+@media (prefers-reduced-motion: no-preference) {
+  button:not(:disabled), a[href], summary, [role="tab"] {
+    transition-timing-function: var(--ease-out);
+  }
+  button:not(:disabled):active, a[href]:active, summary:active {
+    transform: scale(0.97);
+    transition: transform 120ms var(--ease-out);
+  }
+}
+/* A faster spinner makes waiting feel shorter */
+.animate-spin { animation-duration: 0.7s; }
 
 mark.hl {
   @apply rounded-sm bg-amber-300/70 px-0.5 text-inherit dark:bg-amber-500/40;

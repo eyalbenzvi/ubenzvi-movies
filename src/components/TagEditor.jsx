@@ -102,7 +102,7 @@ export default function TagEditor({ movie, tags, moments = [], allTags, onAdd, o
           </button>
         </div>
         {open && options.length > 0 && (
-          <ul role="listbox" className="absolute inset-x-0 top-full z-10 mt-1 max-h-44 animate-fade-in overflow-auto rounded-2xl border border-line bg-surface p-1 shadow-xl">
+          <ul role="listbox" className="absolute inset-x-0 top-full z-10 mt-1 max-h-44 origin-top transition-[opacity,scale] duration-150 ease-[var(--ease-out)] starting:scale-[0.97] starting:opacity-0 overflow-auto rounded-2xl border border-line bg-surface p-1 shadow-xl">
             {options.map((o, i) => (
               <li key={o} role="option" aria-selected={i === highlighted}>
                 <button
