@@ -1,8 +1,43 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),iframe,[tabindex]:not([tabindex="-1"])'
 let openCount = 0
+const EXIT_MS = 260
+
+/**
+ * Exit animation that works for every way a sheet can close (X, backdrop, Esc, swipe, the phone's
+ * Back button, navigation): the component is already unmounting, so a static visual copy of it is
+ * left on top for a moment and animated out. Players are replaced by black boxes in the copy so
+ * nothing reloads (no extra Drive views), and scroll positions are kept so nothing jumps.
+ */
+function playExit(node) {
+  if (!node || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+  const originals = [...node.querySelectorAll('*')]
+  const scrolls = originals.map((el) => el.scrollTop)
+  const clone = node.cloneNode(true)
+  for (const media of clone.querySelectorAll('iframe, video')) {
+    const box = document.createElement('div')
+    box.className = media.className
+    box.style.background = '#000'
+    media.replaceWith(box)
+  }
+  for (const el of clone.querySelectorAll('[class*="animate-"]')) el.style.animation = 'none'
+  clone.setAttribute('inert', '')
+  clone.setAttribute('aria-hidden', 'true')
+  clone.style.pointerEvents = 'none'
+  clone.removeAttribute('role')
+  clone.querySelector('[role=dialog]')?.removeAttribute('role')
+  clone.querySelector('[data-sheet-backdrop]')?.classList.add('sheet-backdrop-exit')
+  const panel = clone.querySelector('[data-sheet-panel]')
+  panel?.classList.add('sheet-panel-exit')
+  document.body.appendChild(clone)
+  const copies = [...clone.querySelectorAll('*')]
+  scrolls.forEach((top, i) => { if (top && copies[i]) copies[i].scrollTop = top })
+  const remove = () => clone.remove()
+  panel?.addEventListener('animationend', remove, { once: true })
+  setTimeout(remove, EXIT_MS + 120)
+}
 
 /**
  * Accessible overlay shell used by every dialog.
@@ -14,7 +49,14 @@ let openCount = 0
  */
 export default function Sheet({ onClose, labelledBy, children, full = false, maxWidth = 'sm:max-w-2xl', className = '' }) {
   const panelRef = useRef(null)
+  const rootRef = useRef(null)
   const [dragY, setDragY] = useState(0)
+
+  // Runs while the DOM is still attached (layout cleanup), so the copy keeps its look and scroll
+  useLayoutEffect(() => {
+    const node = rootRef.current
+    return () => playExit(node)
+  }, [])
   const drag = useRef(null)
 
   useEffect(() => {
@@ -75,10 +117,11 @@ export default function Sheet({ onClose, labelledBy, children, full = false, max
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4" role="presentation">
-      <div className="absolute inset-0 animate-fade-in bg-stone-950/55 dark:bg-black/70" onClick={onClose} aria-hidden />
+    <div ref={rootRef} className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4" role="presentation">
+      <div data-sheet-backdrop className="absolute inset-0 animate-fade-in bg-stone-950/55 dark:bg-black/70" onClick={onClose} aria-hidden />
       <div
         ref={panelRef}
+        data-sheet-panel
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}

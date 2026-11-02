@@ -56,6 +56,15 @@
   from { opacity: 0; transform: translateY(6px) }
   to { opacity: 1; transform: none }
 }
+/* Exits are faster than entrances (emil-design-eng); `to` only, so a sheet mid-swipe leaves from where it is */
+@keyframes sheet-out { to { transform: translateY(100%) } }
+@keyframes pop-out { to { opacity: 0; transform: scale(0.98) } }
+@keyframes fade-out { to { opacity: 0 } }
+.sheet-panel-exit { animation: sheet-out 0.24s var(--ease-out) forwards !important; transition: none !important; }
+.sheet-backdrop-exit { animation: fade-out 0.2s var(--ease-out) forwards !important; }
+@media (min-width: 640px) {
+  .sheet-panel-exit { animation: pop-out 0.16s var(--ease-out) forwards !important; }
+}
 @keyframes shimmer { from { background-position: 150% 0 } to { background-position: -50% 0 } }
 
 .dark {
