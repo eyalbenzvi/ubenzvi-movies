@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { Check, Download, Pencil, Plus, Tags, Trash2, Upload, X } from 'lucide-react'
 import Sheet from './Sheet.jsx'
+import HoldButton from './HoldButton.jsx'
 import { useBackClose } from '../hooks/useBackClose.js'
 import { MAX_IMPORT_BYTES } from '../hooks/useArchiveStore.js'
 
@@ -113,7 +114,7 @@ export default function TagManager({ store, activeTags, onTagClick, onRenameTag,
               ) : confirmDelete === name ? (
                 <div className="flex w-full min-w-0 flex-wrap items-center gap-2 py-1">
                   <span className="min-w-0 flex-1 text-sm">למחוק את <b>{name}</b>{count ? ` מ-${count} סרטים` : ''}?</span>
-                  <button type="button" onClick={() => { onDeleteTag(name); setConfirmDelete(null) }} className={`${btn} h-10 bg-rose-600 text-white hover:bg-rose-500`}>מחק</button>
+                  <HoldButton onConfirm={() => { onDeleteTag(name); setConfirmDelete(null) }} className="h-10 px-4 text-sm" ariaLabel={`החזיקו כדי למחוק את התגית ${name}`}>החזיקו למחיקה</HoldButton>
                   <button type="button" onClick={() => setConfirmDelete(null)} className={`${btn} h-10 hover:bg-surface-2 `}>ביטול</button>
                 </div>
               ) : (
@@ -161,7 +162,7 @@ export default function TagManager({ store, activeTags, onTagClick, onRenameTag,
             <div className="animate-fade-in space-y-2 rounded-2xl border border-rose-500/40 bg-rose-500/10 p-3 text-sm" role="alert">
               <p>הייבוא <b>יחליף</b> את כל התגיות, ההערות והמועדפים הקיימים. להמשיך?</p>
               <div className="flex gap-2">
-                <button type="button" onClick={() => { runImport(pendingReplace, 'replace'); setPendingReplace(null) }} className={`${btn} h-10 bg-rose-600 text-white hover:bg-rose-500`}>כן, להחליף</button>
+                <HoldButton onConfirm={() => { runImport(pendingReplace, 'replace'); setPendingReplace(null) }} className="h-10 px-4 text-sm" ariaLabel="החזיקו כדי להחליף את כל הנתונים">החזיקו להחלפה</HoldButton>
                 <button type="button" onClick={() => setPendingReplace(null)} className={`${btn} h-10 hover:bg-surface-2 `}>ביטול</button>
               </div>
             </div>

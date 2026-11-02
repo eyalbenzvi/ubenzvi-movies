@@ -86,7 +86,7 @@ function DetailsPanel({ movie, docIndexEntry, userDocText, onSaveDocText, terms 
       {showOriginal && movie.detailsEmbedUrl && (
         <EmbedFrame src={movie.detailsEmbedUrl} title={`מה בקלטת – ${movie.displayTitle}`} kind="doc" externalUrl={movie.detailsUrl} />
       )}
-      <details className="group rounded-2xl border border-line">
+      <details className="disclosure group rounded-2xl border border-line">
         <summary className="flex h-12 cursor-pointer list-none items-center gap-2 px-4 text-sm font-semibold text-muted">
           <Pencil className="size-4" aria-hidden /> הוספת פרטים לחיפוש
           <ChevronLeft className="ms-auto size-4 transition group-open:-rotate-90" aria-hidden />

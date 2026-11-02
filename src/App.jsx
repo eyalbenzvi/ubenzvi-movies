@@ -133,6 +133,16 @@ export default function App() {
     return [...counts.entries()].map(([year, count]) => ({ year, count })).sort((a, b) => a.year - b.year)
   }, [searchMatched, filters.decade])
 
+  // Every year from the first recording to the last, including empty ones (drawn honestly)
+  const yearCounts = useMemo(() => {
+    const years = movies.map((m) => m.year).filter(Boolean)
+    const counts = new Map()
+    for (const y of years) counts.set(y, (counts.get(y) || 0) + 1)
+    const out = []
+    for (let y = Math.min(...years); y <= Math.max(...years); y++) out.push({ year: y, count: counts.get(y) || 0 })
+    return out
+  }, [])
+
   // ---- Filter + sort -----------------------------------------------------
   const favSet = useMemo(() => new Set(favorites), [favorites])
   const visible = useMemo(() => {
@@ -285,6 +295,9 @@ export default function App() {
         <FilterBar
           filters={{ ...filters, sort, view: showHome ? 'rows' : view === 'rows' ? 'grid' : view }}
           isHome={showHome}
+          yearCounts={yearCounts}
+          undated={movies.length - movies.filter((m) => m.year).length}
+          onPickYear={(y) => setFilters((f) => ({ ...f, decade: Math.floor(y / 10) * 10, year: y }))}
           setFilter={setFilter}
           decadeCounts={decadeCounts}
           yearsInDecade={yearsInDecade}

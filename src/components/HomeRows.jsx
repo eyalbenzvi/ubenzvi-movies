@@ -10,7 +10,7 @@ export function Hero({ movie, segments, onOpen, onShuffle }) {
   const year = yearLabel(movie)
   const blurb = segments?.length ? segments.slice(0, 4).map((s) => s.text).join(' · ') : null
   return (
-    <section className="relative -mx-4 overflow-hidden bg-paper text-ink sm:mx-0 sm:rounded-3xl sm:bg-stone-950 sm:text-white" aria-label="סרט מומלץ">
+    <section key={movie.id} className="relative -mx-4 overflow-hidden bg-paper text-ink transition-opacity duration-300 ease-[var(--ease-out)] starting:opacity-0 sm:mx-0 sm:rounded-3xl sm:bg-stone-950 sm:text-white" aria-label="סרט מומלץ">
       {/* Phone: image on top, text below on a solid background. ≥ sm: text over the image with a strong scrim. */}
       <div className="relative">
         <Thumbnail movie={movie} className="aspect-[2/1] w-full sm:aspect-auto sm:h-[clamp(300px,34vw,440px)]" iconClass="size-14" label />

@@ -1,0 +1,1 @@
+Source: https://github.com/emilkowalski/skill (skills/improve-animations) @ f1090bec277140d02ed202440185ad9d02ac1490 (2026-11-02), MIT license

@@ -6,8 +6,8 @@ const TONES = ['bg-[#3a2e1f]', 'bg-[#3b2326]', 'bg-[#2f3324]', 'bg-[#3a2a1c]', '
 
 /**
  * Drive thumbnail with skeleton → fade-in, and a warm "VHS label" fallback when Drive refuses it.
- * Drive thumbnails often carry a baked-in letterbox, so the image is slightly zoomed (cropping it)
- * over a blurred copy of itself.
+ * Drive thumbnails often carry a baked-in letterbox, so the image is slightly zoomed to crop it.
+ * (No blurred backdrop copy: a 24px blur per card was the costliest paint on a phone grid.)
  */
 export default function Thumbnail({ movie, className = '', iconClass = 'size-8', label = false }) {
   const [state, setState] = useState(movie.thumbnailUrl ? 'loading' : 'failed')
@@ -28,13 +28,6 @@ export default function Thumbnail({ movie, className = '', iconClass = 'size-8',
       )}
       {movie.thumbnailUrl && state !== 'failed' && (
         <>
-          <img
-            src={movie.thumbnailUrl}
-            alt=""
-            aria-hidden
-            className={`absolute inset-0 size-full scale-125 object-cover blur-xl transition-opacity duration-300 ease-[var(--ease-out)] ${state === 'loaded' ? 'opacity-50' : 'opacity-0'}`}
-            referrerPolicy="no-referrer"
-          />
           <img
             src={movie.thumbnailUrl}
             alt=""

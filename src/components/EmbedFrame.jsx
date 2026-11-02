@@ -32,9 +32,25 @@ export default function EmbedFrame({ src, title, kind, movie, externalUrl, onExp
 
   useEffect(() => { onExpandedChange?.(expanded) }, [expanded, onExpandedChange])
 
+  // Entering the in-app overlay (when native fullscreen isn't available, e.g. iPhone)
+  useEffect(() => {
+    const el = wrapRef.current
+    if (!expanded || !el?.animate || fsElement() || reduceMotion()) return
+    el.animate([{ opacity: 0, transform: 'scale(0.98)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expanded])
+
+  const reduceMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
   const exitExpanded = () => {
     pushedRef.current = false
-    setExpanded(false)
+    const el = wrapRef.current
+    if (el && !fsElement() && !reduceMotion() && el.animate) {
+      // Exit faster than entry, same path reversed (WAAPI: off the main thread)
+      el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(0.98)' }], { duration: 150, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' })
+        .onfinish = () => setExpanded(false)
+    } else {
+      setExpanded(false)
+    }
     screen.orientation?.unlock?.()
     exitFs()
   }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { BookmarkPlus, Check, Clock, Pencil, Play, Trash2, X } from 'lucide-react'
 import Highlight from './Highlight.jsx'
 import TimeInput from './TimeInput.jsx'
@@ -51,6 +51,11 @@ export default function MomentList({ moments, searchTerms, onJump, onUpdate, onD
   }, [deleted])
 
   const key = (m) => `${m.tag}@${m.t}`
+  // Rows present when the list first renders don't animate; rows added later slide in (state indication)
+  const seen = useRef(null)
+  if (seen.current === null) seen.current = new Set(moments.map(key))
+  const isNew = (m) => !seen.current.has(key(m))
+  useEffect(() => { for (const m of moments) seen.current.add(key(m)) })
   const matches = (m) => searchTerms?.length && searchTerms.some((t) => normalize(m.tag).includes(t))
   const list = showAll ? moments : moments.slice(0, VISIBLE)
 
@@ -80,7 +85,7 @@ export default function MomentList({ moments, searchTerms, onJump, onUpdate, onD
                 onDelete={() => { onDelete(m); setEditing(null); setDeleted({ moment: m }) }}
               />
             ) : (
-              <li key={key(m)} className={`flex items-center gap-1 pe-1 ps-2 ${matches(m) ? 'bg-amber-500/10' : ''}`}>
+              <li key={key(m)} className={`flex items-center gap-1 pe-1 ps-2 ${matches(m) ? 'bg-amber-500/10' : ''} ${isNew(m) ? 'transition-[opacity,translate] duration-200 ease-[var(--ease-out)] starting:-translate-y-1 starting:opacity-0' : ''}`}>
                 <button type="button" onClick={() => onJump(m.t)} className="flex min-h-12 min-w-0 flex-1 items-center gap-3 text-start" aria-label={`קפיצה ל-${timeSpoken(m.t)} — ${m.tag}`}>
                   <span dir="ltr" className="inline-flex h-8 min-w-[4.25rem] shrink-0 items-center justify-center gap-1 rounded-full bg-amber-500/15 px-2 text-sm font-semibold tabular-nums text-accent-ink">
                     <Play className="size-3 fill-current" aria-hidden />{formatTime(m.t)}

@@ -110,6 +110,15 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline-offs
     transition: transform 120ms var(--ease-out);
   }
 }
+/* Disclosures open instead of snapping (progressive enhancement; older browsers just snap) */
+details.disclosure { interpolate-size: allow-keywords; }
+details.disclosure::details-content {
+  block-size: 0; opacity: 0; overflow: clip;
+  transition: block-size 220ms var(--ease-out), opacity 220ms var(--ease-out), content-visibility 220ms allow-discrete;
+}
+details.disclosure[open]::details-content { block-size: auto; opacity: 1; }
+@media (prefers-reduced-motion: reduce) { details.disclosure::details-content { transition: none; } }
+
 /* A faster spinner makes waiting feel shorter */
 .animate-spin { animation-duration: 0.7s; }
 

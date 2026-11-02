@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 
 const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),iframe,[tabindex]:not([tabindex="-1"])'
@@ -50,7 +50,7 @@ function playExit(node) {
 export default function Sheet({ onClose, labelledBy, children, full = false, maxWidth = 'sm:max-w-2xl', className = '' }) {
   const panelRef = useRef(null)
   const rootRef = useRef(null)
-  const [dragY, setDragY] = useState(0)
+  const dragY = useRef(0) // drag offset lives outside React state: no re-render per frame
 
   // Runs while the DOM is still attached (layout cleanup), so the copy keeps its look and scroll
   useLayoutEffect(() => {
@@ -105,15 +105,20 @@ export default function Sheet({ onClose, labelledBy, children, full = false, max
     if (!drag.current || drag.current.id !== e.pointerId) return
     const dy = e.clientY - drag.current.y
     // Friction instead of a hard stop: dragging up moves less and less
-    setDragY(dy >= 0 ? dy : -Math.sqrt(-dy) * 2)
+    dragY.current = dy >= 0 ? dy : -Math.sqrt(-dy) * 2
+    const el = panelRef.current
+    if (el) { el.style.transition = 'none'; el.style.transform = `translateY(${dragY.current}px)` }
   }
   const onPointerUp = (e) => {
     if (!drag.current || (e && drag.current.id !== e.pointerId)) return
     const elapsed = Math.max(1, performance.now() - drag.current.t)
     drag.current = null
-    const velocity = dragY / elapsed // px per ms
-    if (dragY > 110 || (dragY > 10 && velocity > 0.11)) onClose() // a quick flick is enough
-    else setDragY(0)
+    const dy = dragY.current
+    const velocity = dy / elapsed // px per ms
+    if (dy > 110 || (dy > 10 && velocity > 0.11)) { onClose(); return } // a quick flick is enough
+    dragY.current = 0
+    const el = panelRef.current
+    if (el) { el.style.transition = 'transform 400ms var(--ease-drawer)'; el.style.transform = '' }
   }
 
   return createPortal(
@@ -130,7 +135,6 @@ export default function Sheet({ onClose, labelledBy, children, full = false, max
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
-        style={dragY ? { transform: `translateY(${dragY}px)`, transition: 'none' } : { transition: 'transform 400ms var(--ease-drawer)' }}
         className={`relative flex w-full animate-sheet-up flex-col overflow-hidden border-line bg-surface shadow-2xl outline-none sm:animate-pop-in sm:rounded-3xl sm:border ${
           full ? 'h-dvh max-sm:rounded-none sm:h-auto sm:max-h-[94dvh]' : 'max-h-[92dvh] rounded-t-3xl border-t'
         } ${maxWidth} ${className}`}
