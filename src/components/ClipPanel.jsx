@@ -10,7 +10,7 @@ const toDigits = (sec) => formatTime(sec).replace(/\D/g, '').replace(/^0+(?=\d)/
 function NowButton({ onClick, label }) {
   return (
     <button type="button" onClick={onClick} title={label} aria-label={label}
-      className="flex size-12 shrink-0 items-center justify-center rounded-xl border border-line text-muted hover:bg-surface-2 hover:text-ink">
+      className="flex size-12 shrink-0 items-center justify-center rounded-2xl border border-line text-muted hover:bg-surface-2 hover:text-ink">
       <RotateCcw className="size-4" aria-hidden />
     </button>
   )
@@ -125,7 +125,7 @@ export default function ClipPanel({ movie, videoRef, canRecord, auth, onClose })
             <p className="text-sm">אורך הקטע: <span dir="ltr" className="font-semibold tabular-nums">{formatTime(length)}</span></p>
           ) : null}
 
-          <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-sm leading-relaxed">
+          <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-3 text-sm leading-relaxed">
             <p className="mb-1.5 flex items-center gap-1.5 font-semibold text-accent-ink"><Info className="size-4" aria-hidden /> חשוב לדעת לפני שמתחילים</p>
             <ul className="list-disc space-y-1 ps-5 text-ink">
               <li>
@@ -138,7 +138,7 @@ export default function ClipPanel({ movie, videoRef, canRecord, auth, onClose })
               <li>אורך מרבי לקטע: 15 דקות.</li>
             </ul>
           </div>
-          <button type="button" onClick={begin} className="inline-flex h-11 items-center gap-2 rounded-xl bg-amber-500 px-5 text-sm font-semibold text-stone-950 ring-1 ring-black/10 hover:bg-amber-400 dark:ring-0">
+          <button type="button" onClick={begin} className="inline-flex h-11 items-center gap-2 rounded-2xl bg-amber-500 px-5 text-sm font-semibold text-stone-950 ring-1 ring-black/10 hover:bg-amber-400 dark:ring-0">
             <Scissors className="size-4" aria-hidden /> יצירת הקטע
           </button>
         </>
@@ -155,24 +155,24 @@ export default function ClipPanel({ movie, videoRef, canRecord, auth, onClose })
             <div className="h-full rounded-full bg-amber-500 transition-[width] duration-500" style={{ width: `${progress.p * 100}%` }} />
           </div>
           <p className="text-sm font-medium text-accent-ink">השאירו את הדף פתוח והמסך דולק עד הסוף — מעבר לאפליקציה אחרת או נעילת המסך יעצרו את ההקלטה.</p>
-          <button type="button" onClick={() => abortRef.current?.abort()} className="h-10 rounded-xl px-3 text-sm font-semibold text-rose-600 hover:bg-rose-500/10 dark:text-rose-400">ביטול</button>
+          <button type="button" onClick={() => abortRef.current?.abort()} className="h-10 rounded-2xl px-3 text-sm font-semibold text-rose-600 hover:bg-rose-500/10 dark:text-rose-400">ביטול</button>
         </div>
       )}
 
       {phase === 'done' && result && (
         <div className="space-y-3">
-          <video src={result.url} controls playsInline className="aspect-video w-full rounded-xl bg-black" />
+          <video src={result.url} controls playsInline className="aspect-video w-full rounded-2xl bg-black" />
           <p className="truncate text-sm text-muted"><bdi>{result.file.name}</bdi> · <span dir="ltr">{(result.file.size / 1048576).toFixed(1)} MB</span></p>
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={save} className="inline-flex h-11 items-center gap-2 rounded-xl bg-amber-500 px-4 text-sm font-semibold text-stone-950 ring-1 ring-black/10 hover:bg-amber-400 dark:ring-0">
+            <button type="button" onClick={save} className="inline-flex h-11 items-center gap-2 rounded-2xl bg-amber-500 px-4 text-sm font-semibold text-stone-950 ring-1 ring-black/10 hover:bg-amber-400 dark:ring-0">
               <Download className="size-4" aria-hidden /> שמירה במכשיר
             </button>
             {canShare && (
-              <button type="button" onClick={share} className="inline-flex h-11 items-center gap-2 rounded-xl bg-surface-2 px-4 text-sm font-semibold hover:bg-line">
+              <button type="button" onClick={share} className="inline-flex h-11 items-center gap-2 rounded-2xl bg-surface-2 px-4 text-sm font-semibold hover:bg-line">
                 <Share2 className="size-4" aria-hidden /> שיתוף / שמירה לתמונות
               </button>
             )}
-            <button type="button" onClick={() => { URL.revokeObjectURL(result.url); setResult(null); setPhase('setup') }} className="inline-flex h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-muted hover:bg-surface-2">
+            <button type="button" onClick={() => { URL.revokeObjectURL(result.url); setResult(null); setPhase('setup') }} className="inline-flex h-11 items-center gap-2 rounded-2xl px-3 text-sm font-semibold text-muted hover:bg-surface-2">
               קטע חדש
             </button>
           </div>

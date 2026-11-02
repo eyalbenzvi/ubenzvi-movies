@@ -312,9 +312,9 @@ export default function App() {
             </p>
             <div className="mt-2 flex flex-wrap justify-center gap-2">
               {hasActiveFilters && deferredQuery.trim() && (
-                <button type="button" onClick={() => setFilters(DEFAULT_FILTERS)} className="h-11 rounded-xl border border-line-strong px-4 text-sm font-semibold hover:border-amber-500">חיפוש בלי המסננים</button>
+                <button type="button" onClick={() => setFilters(DEFAULT_FILTERS)} className="h-11 rounded-2xl border border-line-strong px-4 text-sm font-semibold hover:border-amber-500">חיפוש בלי המסננים</button>
               )}
-              <button type="button" onClick={resetFilters} className="h-11 rounded-xl bg-amber-500 px-4 text-sm font-semibold text-stone-950 hover:bg-amber-400">הצג את כל הסרטים</button>
+              <button type="button" onClick={resetFilters} className="h-11 rounded-2xl bg-amber-500 px-4 text-sm font-semibold text-stone-950 hover:bg-amber-400">הצג את כל הסרטים</button>
             </div>
           </div>
         ) : view === 'list' ? (

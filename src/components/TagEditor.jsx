@@ -86,7 +86,7 @@ export default function TagEditor({ movie, tags, moments = [], allTags, onAdd, o
             onKeyDown={onKeyDown}
             placeholder="הוסף תגית (לדוגמה: ילדות, טיול, מצחיק)…"
             maxLength={40}
-            className="h-11 min-w-0 flex-1 rounded-xl border border-line-strong bg-surface px-3 text-base sm:text-sm outline-none transition focus:border-focus focus:ring-2 focus:ring-focus/25"
+            className="h-11 min-w-0 flex-1 rounded-2xl border border-line-strong bg-surface px-3 text-base sm:text-sm outline-none transition focus:border-focus focus:ring-2 focus:ring-focus/25"
             aria-label="תגית חדשה"
             role="combobox"
             aria-expanded={open && options.length > 0}
@@ -96,13 +96,13 @@ export default function TagEditor({ movie, tags, moments = [], allTags, onAdd, o
             type="button"
             onClick={() => commit()}
             disabled={!value.trim()}
-            className="inline-flex h-11 shrink-0 items-center gap-1 rounded-xl bg-amber-500 px-4 text-sm font-semibold text-stone-950 transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:bg-amber-500/35 disabled:text-stone-950/60"
+            className="inline-flex h-11 shrink-0 items-center gap-1 rounded-2xl bg-amber-500 px-4 text-sm font-semibold text-stone-950 transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:bg-amber-500/35 disabled:text-stone-950/60"
           >
             <Plus className="size-4" /> הוסף
           </button>
         </div>
         {open && options.length > 0 && (
-          <ul role="listbox" className="absolute inset-x-0 top-full z-10 mt-1 max-h-44 animate-fade-in overflow-auto rounded-xl border border-line bg-surface p-1 shadow-xl">
+          <ul role="listbox" className="absolute inset-x-0 top-full z-10 mt-1 max-h-44 animate-fade-in overflow-auto rounded-2xl border border-line bg-surface p-1 shadow-xl">
             {options.map((o, i) => (
               <li key={o} role="option" aria-selected={i === highlighted}>
                 <button

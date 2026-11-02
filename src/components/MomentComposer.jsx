@@ -63,7 +63,7 @@ export default function MomentComposer({ movie, moments, tags, allTags, onSave, 
         />
         {getNow && (
           <button type="button" onClick={() => { const n = getNow(); if (n != null) { setDigits(secondsToDigits(n)); setError(null) } }}
-            className={`flex size-12 shrink-0 items-center justify-center rounded-xl border ${dark ? 'border-stone-600 text-stone-200 hover:bg-stone-800' : 'border-line text-muted hover:bg-surface-2'}`}
+            className={`flex size-12 shrink-0 items-center justify-center rounded-2xl border ${dark ? 'border-stone-600 text-stone-200 hover:bg-stone-800' : 'border-line text-muted hover:bg-surface-2'}`}
             aria-label="עדכן לזמן הנוכחי בנגן" title="הזמן הנוכחי בנגן">
             <RotateCcw className="size-4" aria-hidden />
           </button>
@@ -81,10 +81,10 @@ export default function MomentComposer({ movie, moments, tags, allTags, onSave, 
             maxLength={40}
             placeholder="למשל: עידן צונח"
             aria-invalid={error?.field === 'label' || undefined}
-            className={`h-12 w-full min-w-0 rounded-xl border px-3 text-base outline-none transition focus:ring-2 ${error?.field === 'label' ? 'border-rose-500' : ''} ${inputTone}`}
+            className={`h-12 w-full min-w-0 rounded-2xl border px-3 text-base outline-none transition focus:ring-2 ${error?.field === 'label' ? 'border-rose-500' : ''} ${inputTone}`}
           />
           {options.length > 0 && (
-            <ul className={`absolute inset-x-0 top-full z-10 mt-1 overflow-hidden rounded-xl border p-1 shadow-xl ${dark ? 'border-stone-700 bg-stone-900' : 'border-line bg-surface'}`}>
+            <ul className={`absolute inset-x-0 top-full z-10 mt-1 overflow-hidden rounded-2xl border p-1 shadow-xl ${dark ? 'border-stone-700 bg-stone-900' : 'border-line bg-surface'}`}>
               {options.map((o) => (
                 <li key={o}>
                   <button type="button" onMouseDown={(e) => { e.preventDefault(); setLabel(o) }} className={`w-full rounded-lg px-3 py-2.5 text-start text-sm ${dark ? 'hover:bg-stone-800' : 'hover:bg-surface-2'}`}>{o}</button>
@@ -93,7 +93,7 @@ export default function MomentComposer({ movie, moments, tags, allTags, onSave, 
             </ul>
           )}
         </label>
-        <button type="button" onClick={save} className="h-12 shrink-0 rounded-xl bg-amber-500 px-4 text-base font-semibold text-stone-950 hover:bg-amber-400">שמור</button>
+        <button type="button" onClick={save} className="h-12 shrink-0 rounded-2xl bg-amber-500 px-4 text-base font-semibold text-stone-950 hover:bg-amber-400">שמור</button>
         <button type="button" onClick={onClose} className={`flex size-11 shrink-0 items-center justify-center self-end rounded-full ${dark ? 'text-stone-300 hover:bg-stone-800' : 'text-muted hover:bg-surface-2'}`} aria-label="סגור">
           <X className="size-5" aria-hidden />
         </button>

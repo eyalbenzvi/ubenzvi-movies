@@ -7,7 +7,7 @@ import { yearLabel } from './MovieCard.jsx'
 export default function MovieListItem({ movie, match, tags, isFavorite, watched, onOpen, onToggleFavorite }) {
   const year = yearLabel(movie)
   return (
-    <li className="group flex items-start gap-3 rounded-xl px-1.5 py-2 transition-colors can-hover:hover:bg-surface sm:items-center sm:gap-4 sm:px-3">
+    <li className="group flex items-start gap-3 rounded-2xl px-1.5 py-2 transition-colors can-hover:hover:bg-surface sm:items-center sm:gap-4 sm:px-3">
       <button
         type="button"
         onClick={() => onOpen(movie, match?.moments?.[0]?.t)}

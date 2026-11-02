@@ -93,7 +93,7 @@ export default function EmbedFrame({ src, title, kind, movie, externalUrl, onExp
   const isDoc = kind === 'doc'
   const frameBox = expanded
     ? `fixed inset-0 z-[70] flex flex-col ${isDoc ? 'bg-surface' : 'bg-black'}`
-    : `relative overflow-hidden ${isDoc ? 'h-[calc(100dvh-16rem)] min-h-80 rounded-xl border border-line bg-surface ' : 'aspect-video bg-black sm:rounded-xl'}`
+    : `relative overflow-hidden ${isDoc ? 'h-[calc(100dvh-16rem)] min-h-80 rounded-2xl border border-line bg-surface ' : 'aspect-video bg-black sm:rounded-2xl'}`
 
   return (
     <>
@@ -102,11 +102,11 @@ export default function EmbedFrame({ src, title, kind, movie, externalUrl, onExp
         <div className="flex shrink-0 items-center gap-2 bg-stone-950 px-3 py-1.5 text-stone-100" style={{ paddingTop: 'max(0.375rem, env(safe-area-inset-top))' }}>
           <span className="min-w-0 flex-1 truncate text-sm font-medium" role="status" aria-live="polite">{status || title}</span>
           {onMark && (
-            <button type="button" onClick={onMark} className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-white/15 px-3 text-sm font-semibold hover:bg-white/25">
+            <button type="button" onClick={onMark} className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-2xl bg-white/15 px-3 text-sm font-semibold hover:bg-white/25">
               <BookmarkPlus className="size-4" aria-hidden /> סמן רגע
             </button>
           )}
-          <button type="button" onClick={collapse} aria-label="חזרה לאפליקציה" className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-amber-500 px-3 text-sm font-semibold text-stone-950 hover:bg-amber-400">
+          <button type="button" onClick={collapse} aria-label="חזרה לאפליקציה" className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-2xl bg-amber-500 px-3 text-sm font-semibold text-stone-950 hover:bg-amber-400">
             <Minimize2 className="size-4" aria-hidden /> חזרה
           </button>
         </div>
@@ -123,11 +123,11 @@ export default function EmbedFrame({ src, title, kind, movie, externalUrl, onExp
                   <p className="font-semibold">{isDoc ? 'המסמך לא נטען כאן' : 'הסרטון לא נטען כאן'}</p>
                   <p className="max-w-xs text-sm opacity-80">ייתכן שהקובץ לא משותף, או שהדפדפן חוסם תוכן של Google.</p>
                   <div className="flex flex-wrap justify-center gap-2">
-                    <button type="button" onClick={() => setAttempt((a) => a + 1)} className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-white/15 px-4 text-sm font-semibold backdrop-blur hover:bg-white/25">
+                    <button type="button" onClick={() => setAttempt((a) => a + 1)} className="inline-flex h-11 items-center gap-1.5 rounded-2xl bg-white/15 px-4 text-sm font-semibold hover:bg-white/25">
                       <RefreshCw className="size-4" aria-hidden /> נסה שוב
                     </button>
                     {externalUrl && (
-                      <a href={externalUrl} target="_blank" rel="noopener noreferrer" className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-amber-500 px-4 text-sm font-semibold text-stone-950 hover:bg-amber-400">
+                      <a href={externalUrl} target="_blank" rel="noopener noreferrer" className="inline-flex h-11 items-center gap-1.5 rounded-2xl bg-amber-500 px-4 text-sm font-semibold text-stone-950 hover:bg-amber-400">
                         <ExternalLink className="size-4" aria-hidden /> {isDoc ? 'פתח ב-Google Docs' : 'פתח ב-Google Drive'}
                       </a>
                     )}
@@ -176,7 +176,7 @@ export default function EmbedFrame({ src, title, kind, movie, externalUrl, onExp
           <button
             type="button"
             onClick={expand}
-            className="absolute bottom-2 end-2 z-10 inline-flex h-10 items-center gap-1.5 rounded-lg bg-black/70 px-3 text-sm font-semibold text-white shadow-lg backdrop-blur transition hover:bg-black/85"
+            className="absolute bottom-2 end-2 z-10 inline-flex h-10 items-center gap-1.5 rounded-lg bg-black/70 px-3 text-sm font-semibold text-white shadow-lg transition hover:bg-black/85"
           >
             <Maximize2 className="size-4" aria-hidden /> מסך מלא
           </button>

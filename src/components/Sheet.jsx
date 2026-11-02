@@ -70,7 +70,7 @@ export default function Sheet({ onClose, labelledBy, children, full = false, max
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4" role="presentation">
-      <div className="absolute inset-0 animate-fade-in bg-stone-950/55 backdrop-blur-sm dark:bg-black/70" onClick={onClose} aria-hidden />
+      <div className="absolute inset-0 animate-fade-in bg-stone-950/55 dark:bg-black/70" onClick={onClose} aria-hidden />
       <div
         ref={panelRef}
         role="dialog"

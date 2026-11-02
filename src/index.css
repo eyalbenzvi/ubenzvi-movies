@@ -75,12 +75,7 @@ body {
   font-family: var(--font-sans);
 }
 
-/* Barely-there gold glow at the top of the dark theme */
-.dark body {
-  background-image:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(242, 193, 78, 0.05), transparent 60%);
-  background-attachment: fixed;
-}
+
 
 /* One consistent, visible keyboard focus style everywhere */
 :focus-visible {
@@ -96,9 +91,8 @@ mark.hl {
 }
 
 .skeleton {
-  background: linear-gradient(90deg, transparent 25%, rgba(255, 255, 255, 0.08) 50%, transparent 75%);
-  background-size: 200% 100%;
-  animation: var(--animate-shimmer);
+  /* taste-skill: loading is a flat placeholder at the final size, no shimmer */
+  background: rgb(255 255 255 / 0.06);
 }
 
 .scrollbar-thin { scrollbar-width: thin; }

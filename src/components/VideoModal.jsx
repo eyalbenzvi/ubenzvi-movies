@@ -18,7 +18,7 @@ const DATE_RE = /(\(?\d{1,2}[/.]\d{1,2}[/.]\d{2,4}\)?|\(?\d{1,2}[/.]\d{2,4}\)?|(
 
 function SegmentList({ segments, terms }) {
   return (
-    <ol className="divide-y divide-line overflow-hidden rounded-xl border border-line">
+    <ol className="divide-y divide-line overflow-hidden rounded-2xl border border-line">
       {segments.map((s, i) => {
         const date = s.text.match(DATE_RE)?.[0]
         const label = date ? s.text.replace(date, '').replace(/\s+[-–]\s*$|^\s*[-–]\s+/g, '').replace(/\s{2,}/g, ' ').trim() : s.text
@@ -54,10 +54,10 @@ function DocTextEditor({ docId, indexEntry, userText, onSave }) {
         onChange={(e) => setDraft(e.target.value)}
         rows={5}
         placeholder="טקסט נוסף לחיפוש…"
-        className="w-full resize-y rounded-xl border border-line-strong bg-surface p-3 text-base leading-relaxed outline-none focus:border-focus focus:ring-2 focus:ring-focus/25 sm:text-sm"
+        className="w-full resize-y rounded-2xl border border-line-strong bg-surface p-3 text-base leading-relaxed outline-none focus:border-focus focus:ring-2 focus:ring-focus/25 sm:text-sm"
       />
       <div className="flex justify-end">
-        <button type="button" disabled={!dirty} onClick={() => onSave(docId, draft)} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-amber-500 px-4 text-sm font-semibold text-stone-950 hover:bg-amber-400 disabled:bg-amber-500/35 disabled:text-stone-950/60">
+        <button type="button" disabled={!dirty} onClick={() => onSave(docId, draft)} className="inline-flex h-10 items-center gap-1.5 rounded-2xl bg-amber-500 px-4 text-sm font-semibold text-stone-950 hover:bg-amber-400 disabled:bg-amber-500/35 disabled:text-stone-950/60">
           {dirty ? 'שמור' : <><Check className="size-4" aria-hidden /> נשמר</>}
         </button>
       </div>
@@ -75,18 +75,18 @@ function DetailsPanel({ movie, docIndexEntry, userDocText, onSaveDocText, terms 
       {segments.length > 0 && <SegmentList segments={segments} terms={terms} />}
       <div className="flex flex-wrap gap-2">
         {segments.length > 0 && (
-          <button type="button" onClick={() => setShowOriginal((v) => !v)} className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-line-strong px-3 text-sm font-semibold hover:border-amber-500 hover:text-accent-ink">
+          <button type="button" onClick={() => setShowOriginal((v) => !v)} className="inline-flex h-10 items-center gap-1.5 rounded-2xl border border-line-strong px-3 text-sm font-semibold hover:border-amber-500 hover:text-accent-ink">
             <FileText className="size-4" aria-hidden /> {showOriginal ? 'הסתר את המסמך המקורי' : 'הצג את המסמך המקורי'}
           </button>
         )}
-        <a href={movie.detailsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-muted hover:bg-surface-2">
+        <a href={movie.detailsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-1.5 rounded-2xl px-3 text-sm font-semibold text-muted hover:bg-surface-2">
           <ExternalLink className="size-4" aria-hidden /> פתח ב-Google Docs
         </a>
       </div>
       {showOriginal && movie.detailsEmbedUrl && (
         <EmbedFrame src={movie.detailsEmbedUrl} title={`מה בקלטת – ${movie.displayTitle}`} kind="doc" externalUrl={movie.detailsUrl} />
       )}
-      <details className="group rounded-xl border border-line">
+      <details className="group rounded-2xl border border-line">
         <summary className="flex h-12 cursor-pointer list-none items-center gap-2 px-4 text-sm font-semibold text-muted">
           <Pencil className="size-4" aria-hidden /> הוספת פרטים לחיפוש
           <ChevronLeft className="ms-auto size-4 transition group-open:-rotate-90" aria-hidden />
@@ -108,7 +108,7 @@ function PartsPanel({ parts, current, onSelect }) {
             type="button"
             onClick={() => onSelect(m)}
             aria-current={m.id === current.id ? 'true' : undefined}
-            className={`flex w-full items-center gap-3 rounded-xl p-2 text-start transition ${m.id === current.id ? 'bg-amber-500/15 ring-1 ring-amber-500/60' : 'hover:bg-surface-2 '}`}
+            className={`flex w-full items-center gap-3 rounded-2xl p-2 text-start transition ${m.id === current.id ? 'bg-amber-500/15 ring-1 ring-amber-500/60' : 'hover:bg-surface-2 '}`}
           >
             <Thumbnail movie={m} className="aspect-video w-28 shrink-0 rounded-lg" iconClass="size-5" />
             <span className="min-w-0">
@@ -155,7 +155,7 @@ function NotesEditor({ movieId, note, onSave }) {
         onChange={(e) => setDraft(e.target.value)}
         rows={6}
         placeholder="מי מופיע, מה קורה, זיכרונות… (ההערות נשמרות אוטומטית ונכללות בחיפוש)"
-        className="w-full resize-y rounded-xl border border-line-strong bg-surface p-3 text-base leading-relaxed outline-none transition focus:border-focus focus:ring-2 focus:ring-focus/25 sm:text-sm"
+        className="w-full resize-y rounded-2xl border border-line-strong bg-surface p-3 text-base leading-relaxed outline-none transition focus:border-focus focus:ring-2 focus:ring-focus/25 sm:text-sm"
       />
     </section>
   )
@@ -335,7 +335,7 @@ export default function VideoModal({
               )}
             />
           ) : (
-            <div className="flex aspect-video flex-col items-center justify-center gap-2 bg-surface-2 text-center text-muted sm:rounded-xl">
+            <div className="flex aspect-video flex-col items-center justify-center gap-2 bg-surface-2 text-center text-muted sm:rounded-2xl">
               <VideoOff className="size-8 text-amber-500" aria-hidden />
               <p className="font-medium">לסרט הזה עדיין אין קישור לצפייה.</p>
             </div>

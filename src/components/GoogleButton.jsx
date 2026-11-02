@@ -21,14 +21,14 @@ export default function GoogleButton({ onClick, label = 'התחברות עם Goo
   if (compact) {
     return (
       <button type="button" onClick={onClick} aria-label={label} title={label}
-        className={`flex size-10 shrink-0 items-center justify-center rounded-full shadow-sm transition-colors ${tone} ${className}`}>
+        className={`flex size-10 shrink-0 items-center justify-center rounded-full transition-colors ${tone} ${className}`}>
         <GoogleG />
       </button>
     )
   }
   return (
     <button type="button" onClick={onClick}
-      className={`inline-flex h-10 shrink-0 items-center gap-2.5 rounded-full px-3 text-sm font-medium shadow-sm transition-colors ${tone} ${className}`}>
+      className={`inline-flex h-10 shrink-0 items-center gap-2.5 rounded-full px-3 text-sm font-medium transition-colors ${tone} ${className}`}>
       <GoogleG />
       <span>{label}</span>
     </button>

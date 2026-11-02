@@ -11,26 +11,26 @@ const Header = forwardRef(function Header({ query, onQueryChange, theme, onToggl
 
   return (
     <header
-      className={`sticky top-0 z-30 border-b border-line/80 bg-paper/90 backdrop-blur-xl transition-transform duration-300 ${hidden ? '-translate-y-full' : ''}`}
+      className={`sticky top-0 z-30 border-b border-line/80 bg-paper/90 transition-transform duration-300 ${hidden ? '-translate-y-full' : ''}`}
       style={{ paddingTop: 'env(safe-area-inset-top)' }}
     >
       <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2 sm:flex-nowrap sm:py-3 lg:px-8">
         <button type="button" onClick={onHome} className="flex min-w-0 items-center gap-2.5 text-start" aria-label="לעמוד הבית">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent text-on-accent sm:size-10">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-2xl bg-accent text-on-accent sm:size-10">
             <CassetteTape className="size-5" aria-hidden />
           </span>
           <span className="min-w-0 leading-tight">
-            <span className="block truncate font-display text-lg font-semibold sm:text-xl">הסרטים של אורי</span>
+            <h1 className="block truncate font-display text-lg font-semibold sm:text-xl">הסרטים של אורי</h1>
             <span className="hidden text-xs text-muted lg:block">ארכיון הווידאו המשפחתי · {total} סרטים</span>
           </span>
         </button>
 
         <div className="ms-auto flex items-center sm:order-last">
           <AccountButton />
-          <button type="button" onClick={onOpenTagManager} className="inline-flex h-11 items-center gap-1.5 rounded-xl px-2.5 text-sm font-medium text-muted transition hover:bg-line hover:text-accent-ink" aria-label="תגיות וגיבוי">
+          <button type="button" onClick={onOpenTagManager} className="inline-flex h-11 items-center gap-1.5 rounded-2xl px-2.5 text-sm font-medium text-muted transition hover:bg-line hover:text-accent-ink" aria-label="תגיות וגיבוי">
             <Tags className="size-5" aria-hidden /> <span className="hidden xl:inline">תגיות וגיבוי</span>
           </button>
-          <button type="button" onClick={onToggleTheme} className="inline-flex size-11 items-center justify-center rounded-xl text-muted transition hover:bg-line hover:text-accent-ink" aria-label={theme === 'dark' ? 'מעבר למצב בהיר' : 'מעבר למצב כהה'}>
+          <button type="button" onClick={onToggleTheme} className="inline-flex size-11 items-center justify-center rounded-2xl text-muted transition hover:bg-line hover:text-accent-ink" aria-label={theme === 'dark' ? 'מעבר למצב בהיר' : 'מעבר למצב כהה'}>
             {theme === 'dark' ? <Sun className="size-5" aria-hidden /> : <Moon className="size-5" aria-hidden />}
           </button>
         </div>
@@ -96,7 +96,7 @@ function AccountButton() {
           : <span className="grid size-8 place-items-center rounded-full bg-amber-500 text-sm font-bold text-stone-950">{(u.name || '?').slice(0, 1)}</span>}
       </button>
       {open && (
-        <div role="menu" className="absolute end-0 top-full z-40 mt-1 w-64 animate-fade-in rounded-xl border border-line bg-surface p-2 shadow-xl">
+        <div role="menu" className="absolute end-0 top-full z-40 mt-1 w-64 animate-fade-in rounded-2xl border border-line bg-surface p-2 shadow-xl">
           <div className="px-2 py-1.5">
             <p className="truncate font-semibold">{u.name}</p>
             <p className="truncate text-sm text-muted" dir="ltr">{u.email}</p>

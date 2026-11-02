@@ -13,24 +13,22 @@ export function Hero({ movie, segments, onOpen, onShuffle }) {
     <section className="relative -mx-4 overflow-hidden bg-paper text-ink sm:mx-0 sm:rounded-3xl sm:bg-stone-950 sm:text-white" aria-label="סרט מומלץ">
       {/* Phone: image on top, text below on a solid background. ≥ sm: text over the image with a strong scrim. */}
       <div className="relative">
-        <Thumbnail movie={movie} className="aspect-video w-full sm:aspect-auto sm:h-[clamp(300px,34vw,440px)]" iconClass="size-14" label />
-        <div className="absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-paper to-transparent sm:hidden" />
+        <Thumbnail movie={movie} className="aspect-[2/1] w-full sm:aspect-auto sm:h-[clamp(300px,34vw,440px)]" iconClass="size-14" label />
         {/* one corner scrim behind the text (RTL: bottom-right) instead of darkening the whole frame */}
         <div className="absolute inset-0 hidden bg-[radial-gradient(120%_90%_at_100%_100%,rgb(0_0_0/0.92)_0%,rgb(0_0_0/0.55)_45%,transparent_75%)] sm:block" />
       </div>
-      <div className="flex flex-col gap-2.5 px-4 pb-5 pt-1 sm:absolute sm:inset-x-0 sm:bottom-0 sm:max-w-2xl sm:gap-3 sm:p-8">
-        <span className="text-[13px] font-semibold text-accent-ink sm:text-amber-300">מהארכיון</span>
-        <h2 className="font-display text-[28px] font-semibold leading-[1.15] tracking-[-0.01em] sm:text-[46px] sm:[text-shadow:0_2px_16px_rgb(0_0_0/0.8)]">{movie.displayTitle}</h2>
+      <div className="flex flex-col gap-2 px-4 pb-3 pt-3 sm:absolute sm:inset-x-0 sm:bottom-0 sm:max-w-2xl sm:gap-3 sm:p-8">
+        <h2 className="font-display text-[26px] font-semibold leading-[1.15] tracking-[-0.01em] sm:text-[32px] sm:[text-shadow:0_2px_16px_rgb(0_0_0/0.8)]">{movie.displayTitle}</h2>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted sm:text-stone-100">
           {year && <span className="tabular-nums">{year}</span>}
           {movie.detailsUrl && <span className="inline-flex items-center gap-1"><FileText className="size-3.5" aria-hidden /> {segments?.length === 1 ? 'קטע אחד' : `${segments?.length} קטעים`}</span>}
         </div>
-        {blurb && <p className="line-clamp-1 max-w-xl text-sm leading-relaxed text-muted sm:line-clamp-2 sm:text-stone-100 sm:[text-shadow:0_1px_8px_rgb(0_0_0/0.8)]">{blurb}</p>}
+        {blurb && <p className="hidden max-w-xl text-sm leading-relaxed text-muted sm:line-clamp-2 sm:text-stone-100 sm:[text-shadow:0_1px_8px_rgb(0_0_0/0.8)]">{blurb}</p>}
         <div className="flex flex-wrap gap-2 pt-1">
-          <button type="button" onClick={() => onOpen(movie)} className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-amber-500 px-5 text-sm font-bold text-stone-950 ring-1 ring-black/10 transition hover:bg-amber-400 sm:flex-none dark:ring-0">
+          <button type="button" onClick={() => onOpen(movie)} className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-2xl bg-amber-500 px-5 text-sm font-bold text-stone-950 ring-1 ring-black/10 transition hover:bg-amber-400 sm:flex-none dark:ring-0">
             <Play className="size-4 fill-current" aria-hidden /> צפייה
           </button>
-          <button type="button" onClick={onShuffle} className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-surface-2 px-4 text-sm font-semibold text-ink transition hover:bg-line sm:flex-none sm:bg-white/15 sm:text-white sm:hover:bg-white/25">
+          <button type="button" onClick={onShuffle} className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-2xl bg-surface-2 px-4 text-sm font-semibold text-ink transition hover:bg-line sm:flex-none sm:bg-white/15 sm:text-white sm:hover:bg-white/25">
             <Shuffle className="size-4" aria-hidden /> סרט אקראי
           </button>
         </div>
@@ -96,9 +94,8 @@ export function MomentShelf({ items, onOpen }) {
           <button key={`${movie.id}-${tag}-${t}`} type="button" onClick={() => onOpen(movie, t)}
             className="group w-[42vw] shrink-0 snap-start text-start sm:w-56 lg:w-60"
             aria-label={`${tag} · ${formatTime(t)} · ${movie.displayTitle}`}>
-            <span className="relative block aspect-video overflow-hidden rounded-xl ring-1 ring-black/5 dark:ring-white/5">
+            <span className="relative block aspect-video overflow-hidden rounded-2xl ring-1 ring-black/5 dark:ring-white/5">
               <Thumbnail movie={movie} className="size-full" />
-              <span className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent" />
               <span dir="ltr" className="absolute bottom-1.5 start-1.5 inline-flex items-center gap-1 rounded-md bg-amber-500 px-1.5 py-0.5 text-xs font-semibold tabular-nums text-stone-950">
                 <Play className="size-3 fill-current" aria-hidden />{formatTime(t)}
               </span>

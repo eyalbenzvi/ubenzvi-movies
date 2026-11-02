@@ -32,7 +32,7 @@ const TimeInput = forwardRef(function TimeInput({ digits, onDigits, invalid, des
         placeholder="22:10"
         aria-invalid={invalid || undefined}
         aria-describedby={describedBy}
-        className={`h-12 w-28 rounded-xl border text-center text-xl font-semibold tabular-nums outline-none transition focus:ring-2 ${
+        className={`h-12 w-28 rounded-2xl border text-center text-xl font-semibold tabular-nums outline-none transition focus:ring-2 ${
           invalid
             ? 'border-rose-500 focus:ring-rose-500/30'
             : dark

@@ -25,14 +25,14 @@ function EditRow({ moment, onSave, onDelete, onCancel }) {
         <label className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="text-xs font-medium text-muted">תיאור</span>
           <input value={label} maxLength={40} onChange={(e) => { setLabel(e.target.value); setError(null) }} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); save() } }}
-            className="h-12 w-full min-w-0 rounded-xl border border-line-strong bg-surface px-3 text-base outline-none focus:border-focus focus:ring-2 focus:ring-focus/25" />
+            className="h-12 w-full min-w-0 rounded-2xl border border-line-strong bg-surface px-3 text-base outline-none focus:border-focus focus:ring-2 focus:ring-focus/25" />
         </label>
       </div>
       {error && <p role="alert" className="text-xs font-semibold text-rose-500">{error}</p>}
       <div className="flex items-center gap-2">
-        <button type="button" onClick={save} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-amber-500 px-4 text-sm font-semibold text-stone-950 hover:bg-amber-400"><Check className="size-4" aria-hidden /> שמור</button>
-        <button type="button" onClick={onCancel} className="inline-flex h-10 items-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-muted hover:bg-surface-2"><X className="size-4" aria-hidden /> ביטול</button>
-        <button type="button" onClick={onDelete} className="ms-auto inline-flex h-10 items-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-rose-600 hover:bg-rose-500/10 dark:text-rose-400"><Trash2 className="size-4" aria-hidden /> מחק</button>
+        <button type="button" onClick={save} className="inline-flex h-10 items-center gap-1.5 rounded-2xl bg-amber-500 px-4 text-sm font-semibold text-stone-950 hover:bg-amber-400"><Check className="size-4" aria-hidden /> שמור</button>
+        <button type="button" onClick={onCancel} className="inline-flex h-10 items-center gap-1.5 rounded-2xl px-3 text-sm font-semibold text-muted hover:bg-surface-2"><X className="size-4" aria-hidden /> ביטול</button>
+        <button type="button" onClick={onDelete} className="ms-auto inline-flex h-10 items-center gap-1.5 rounded-2xl px-3 text-sm font-semibold text-rose-600 hover:bg-rose-500/10 dark:text-rose-400"><Trash2 className="size-4" aria-hidden /> מחק</button>
       </div>
     </li>
   )
@@ -62,14 +62,14 @@ export default function MomentList({ moments, searchTerms, onJump, onUpdate, onD
       </h3>
 
       {moments.length === 0 && !deleted ? (
-        <div className="rounded-xl border border-dashed border-line-strong px-4 py-3 text-sm text-muted">
+        <div className="rounded-2xl border border-dashed border-line-strong px-4 py-3 text-sm text-muted">
           עוד לא סומנו רגעים. ראיתם משהו שכדאי לזכור? עצרו את הסרטון ולחצו ״סמן רגע״.
           <button type="button" onClick={onMark} className="ms-1 inline-flex items-center gap-1 font-semibold text-accent-ink hover:underline">
             <BookmarkPlus className="size-4" aria-hidden /> סמן רגע
           </button>
         </div>
       ) : (
-        <ol className="divide-y divide-line overflow-hidden rounded-xl border border-line">
+        <ol className="divide-y divide-line overflow-hidden rounded-2xl border border-line">
           {list.map((m) =>
             editing === key(m) ? (
               <EditRow

@@ -4,10 +4,10 @@ import Sheet from './Sheet.jsx'
 import { useBackClose } from '../hooks/useBackClose.js'
 import { MAX_IMPORT_BYTES } from '../hooks/useArchiveStore.js'
 
-const btn = 'inline-flex h-11 items-center justify-center gap-1.5 rounded-xl px-4 text-sm font-semibold transition'
+const btn = 'inline-flex h-11 items-center justify-center gap-1.5 rounded-2xl px-4 text-sm font-semibold transition'
 const primary = `${btn} bg-amber-500 text-stone-950 hover:bg-amber-400 disabled:bg-amber-500/35 disabled:text-stone-950/60`
 const secondary = `${btn} border border-line-strong hover:border-amber-500 hover:text-accent-ink  `
-const iconBtn = 'flex size-11 shrink-0 items-center justify-center rounded-xl text-muted transition'
+const iconBtn = 'flex size-11 shrink-0 items-center justify-center rounded-2xl text-muted transition'
 
 /** Global tag management + JSON backup. */
 export default function TagManager({ store, activeTags, onTagClick, onRenameTag, onDeleteTag, onClose }) {
@@ -87,12 +87,12 @@ export default function TagManager({ store, activeTags, onTagClick, onRenameTag,
             placeholder="שם תגית חדשה…"
             maxLength={40}
             aria-label="שם תגית חדשה"
-            className="h-11 min-w-0 flex-1 rounded-xl border border-line-strong bg-surface px-3 text-base outline-none focus:border-focus focus:ring-2 focus:ring-focus/25 sm:text-sm"
+            className="h-11 min-w-0 flex-1 rounded-2xl border border-line-strong bg-surface px-3 text-base outline-none focus:border-focus focus:ring-2 focus:ring-focus/25 sm:text-sm"
           />
           <button type="submit" disabled={!newTag.trim()} className={`${primary} shrink-0`}><Plus className="size-4" aria-hidden /> צור</button>
         </form>
 
-        <ul className="divide-y divide-line rounded-xl border border-line">
+        <ul className="divide-y divide-line rounded-2xl border border-line">
           {allTags.length === 0 && <li className="p-4 text-center text-sm text-muted">אין תגיות עדיין.</li>}
           {allTags.map(({ name, count }) => (
             <li key={name} className="flex min-w-0 items-center gap-1 px-2 py-1">
@@ -135,7 +135,7 @@ export default function TagManager({ store, activeTags, onTagClick, onRenameTag,
           ))}
         </ul>
 
-        <section className="space-y-3 rounded-xl border border-line bg-surface-2 p-4">
+        <section className="space-y-3 rounded-2xl border border-line bg-surface-2 p-4">
           <div>
             <h3 className="font-semibold">גיבוי ושחזור</h3>
             <p className="mt-1 text-sm leading-relaxed text-muted">
@@ -145,7 +145,7 @@ export default function TagManager({ store, activeTags, onTagClick, onRenameTag,
           <button type="button" onClick={handleExport} className={`${primary} w-full sm:w-auto`}><Download className="size-4" aria-hidden /> ייצוא קובץ גיבוי</button>
 
           <div className="space-y-2 border-t border-line pt-3">
-            <div className="flex rounded-xl border border-line-strong p-1" role="radiogroup" aria-label="אופן הייבוא">
+            <div className="flex rounded-2xl border border-line-strong p-1" role="radiogroup" aria-label="אופן הייבוא">
               {[['merge', 'מיזוג עם הקיים'], ['replace', 'החלפת הכל']].map(([id, label]) => (
                 <button key={id} type="button" role="radio" aria-checked={importMode === id} onClick={() => setImportMode(id)}
                   className={`h-10 flex-1 rounded-lg text-sm font-semibold transition ${importMode === id ? 'bg-ink text-paper' : 'text-muted'}`}>
@@ -158,7 +158,7 @@ export default function TagManager({ store, activeTags, onTagClick, onRenameTag,
           </div>
 
           {pendingReplace && (
-            <div className="animate-fade-in space-y-2 rounded-xl border border-rose-500/40 bg-rose-500/10 p-3 text-sm" role="alert">
+            <div className="animate-fade-in space-y-2 rounded-2xl border border-rose-500/40 bg-rose-500/10 p-3 text-sm" role="alert">
               <p>הייבוא <b>יחליף</b> את כל התגיות, ההערות והמועדפים הקיימים. להמשיך?</p>
               <div className="flex gap-2">
                 <button type="button" onClick={() => { runImport(pendingReplace, 'replace'); setPendingReplace(null) }} className={`${btn} h-10 bg-rose-600 text-white hover:bg-rose-500`}>כן, להחליף</button>

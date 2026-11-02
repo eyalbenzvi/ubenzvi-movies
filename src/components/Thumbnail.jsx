@@ -1,14 +1,8 @@
 import { useState } from 'react'
 import { Film, Music, VideoOff } from 'lucide-react'
 
-const GRADIENTS = [
-  'from-amber-700 via-orange-900 to-stone-950',
-  'from-rose-800 via-red-950 to-stone-950',
-  'from-yellow-700 via-amber-900 to-stone-950',
-  'from-orange-700 via-rose-950 to-stone-950',
-  'from-stone-600 via-stone-800 to-stone-950',
-  'from-teal-800 via-emerald-950 to-stone-950',
-]
+// Flat tape-label tones (taste-skill: no gradients); the VHS stripe below is the archive's own mark
+const TONES = ['bg-[#3a2e1f]', 'bg-[#3b2326]', 'bg-[#2f3324]', 'bg-[#3a2a1c]', 'bg-[#2b2a28]', 'bg-[#1f3030]']
 
 /**
  * Drive thumbnail with skeleton → fade-in, and a warm "VHS label" fallback when Drive refuses it.
@@ -17,13 +11,13 @@ const GRADIENTS = [
  */
 export default function Thumbnail({ movie, className = '', iconClass = 'size-8', label = false }) {
   const [state, setState] = useState(movie.thumbnailUrl ? 'loading' : 'failed')
-  const gradient = GRADIENTS[movie.index % GRADIENTS.length]
+  const tone = TONES[movie.index % TONES.length]
   const Icon = !movie.movieUrl ? VideoOff : movie.type === 'audio' ? Music : Film
 
   return (
     <div className={`relative overflow-hidden bg-stone-900 ${className}`}>
       {state !== 'loaded' && (
-        <div className={`absolute inset-0 bg-gradient-to-br ${gradient}`}>
+        <div className={`absolute inset-0 ${tone}`}>
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-3 text-center">
             <Icon className={`${iconClass} text-amber-100/80`} strokeWidth={1.5} aria-hidden />
             {label && <span className="line-clamp-2 font-display text-sm text-amber-50/90">{movie.displayTitle}</span>}

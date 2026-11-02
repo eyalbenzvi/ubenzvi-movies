@@ -202,8 +202,8 @@ function FilterSheet({ onClose, resultCount, ...props }) {
         </section>
       </div>
       <div className="flex gap-2 border-t border-line p-4" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
-        <button type="button" onClick={props.onReset} className="h-12 rounded-xl px-4 text-sm font-semibold text-muted hover:bg-surface-2">איפוס</button>
-        <button type="button" onClick={close} className="h-12 flex-1 rounded-xl bg-amber-500 text-base font-bold text-stone-950 hover:bg-amber-400">
+        <button type="button" onClick={props.onReset} className="h-12 rounded-2xl px-4 text-sm font-semibold text-muted hover:bg-surface-2">איפוס</button>
+        <button type="button" onClick={close} className="h-12 flex-1 rounded-2xl bg-amber-500 text-base font-bold text-stone-950 hover:bg-amber-400">
           הצג {resultCount} סרטים
         </button>
       </div>
