@@ -115,9 +115,10 @@ function SortSelect({ sort, setFilter, className = '' }) {
   )
 }
 
-function ViewSwitch({ view, setFilter, isHome = true }) {
-  // "Rows" is the home browsing mode; while searching / filtering results are a grid or list.
-  const views = isHome ? VIEWS : VIEWS.filter((v) => v.id !== 'rows')
+function ViewSwitch({ view, setFilter, rowsAvailable = true }) {
+  // "Rows" is the home browsing mode: always offered, except while a search or filter is active
+  // (results are then a flat grid or list). Switching to grid/list must never hide the way back.
+  const views = rowsAvailable ? VIEWS : VIEWS.filter((v) => v.id !== 'rows')
   return (
     <div className="flex w-fit shrink-0 rounded-full border border-line p-0.5" role="group" aria-label="תצוגה">
       {views.map(({ id, label, icon: Icon }) => (
@@ -198,7 +199,7 @@ function FilterSheet({ onClose, resultCount, ...props }) {
           </div>
           <div className="space-y-2">
             <h3 className="text-sm font-semibold text-muted">תצוגה</h3>
-            <ViewSwitch view={filters.view} setFilter={setFilter} isHome={props.isHome} />
+            <ViewSwitch view={filters.view} setFilter={setFilter} rowsAvailable={props.rowsAvailable} />
           </div>
         </section>
       </div>
@@ -229,7 +230,7 @@ export default function FilterBar(props) {
           </Pill>
           <YearStrip inline yearCounts={props.yearCounts} undated={props.undated} activeYear={filters.year} undatedActive={filters.decade === 'none'} onPickYear={props.onPickYear} onPickUndated={() => setFilter('decade', filters.decade === 'none' ? null : 'none')} />
         </div>
-        <ViewSwitch view={filters.view} setFilter={setFilter} isHome={props.isHome} />
+        <ViewSwitch view={filters.view} setFilter={setFilter} rowsAvailable={props.rowsAvailable} />
       </div>
 
       {/* Tablet & desktop: inline */}
@@ -257,7 +258,7 @@ export default function FilterBar(props) {
               {resultCount === totalCount ? `${totalCount} סרטים` : `${resultCount} מתוך ${totalCount}`}
             </span>
             <SortSelect sort={filters.sort} setFilter={setFilter} />
-            <ViewSwitch view={filters.view} setFilter={setFilter} isHome={props.isHome} />
+            <ViewSwitch view={filters.view} setFilter={setFilter} rowsAvailable={props.rowsAvailable} />
           </div>
         </div>
       </div>

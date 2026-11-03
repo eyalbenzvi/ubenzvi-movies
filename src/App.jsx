@@ -298,6 +298,7 @@ export default function App() {
         <FilterBar
           filters={{ ...filters, sort, view: showHome ? 'rows' : view === 'rows' ? 'grid' : view }}
           isHome={showHome}
+          rowsAvailable={!deferredQuery.trim() && !hasActiveFilters}
           yearCounts={yearCounts}
           undated={searchMatched.filter((m) => !m.year).length}
           onPickYear={(y) => setFilters((f) => (f.year === y ? { ...f, decade: null, year: null } : { ...f, decade: Math.floor(y / 10) * 10, year: y }))}
