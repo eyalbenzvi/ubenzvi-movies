@@ -227,21 +227,18 @@ export default function FilterBar(props) {
             <SlidersHorizontal className="size-4" aria-hidden /> סינון
             {activeCount > 0 && <span className="flex size-5 items-center justify-center rounded-full bg-stone-950/85 text-xs font-bold text-amber-300 ring-2 ring-amber-500">{activeCount}</span>}
           </Pill>
-          {props.isHome
-            ? <YearStrip inline yearCounts={props.yearCounts} undated={props.undated} onPickYear={props.onPickYear} onPickUndated={() => setFilter('decade', 'none')} />
-            : <DecadePills {...props} />}
+          <YearStrip inline yearCounts={props.yearCounts} undated={props.undated} activeYear={filters.year} undatedActive={filters.decade === 'none'} onPickYear={props.onPickYear} onPickUndated={() => setFilter('decade', filters.decade === 'none' ? null : 'none')} />
         </div>
         <ViewSwitch view={filters.view} setFilter={setFilter} isHome={props.isHome} />
       </div>
 
       {/* Tablet & desktop: inline */}
       <div className="hidden space-y-3 sm:block">
-        {props.isHome ? (
-          <div>
-            <h2 className="mb-1 text-sm font-semibold text-muted">ציר הזמן של המשפחה</h2>
-            <YearStrip yearCounts={props.yearCounts} undated={props.undated} onPickYear={props.onPickYear} onPickUndated={() => setFilter('decade', 'none')} />
-          </div>
-        ) : (
+        <div>
+          <h2 className="mb-1 text-sm font-semibold text-muted">ציר הזמן של המשפחה</h2>
+          <YearStrip yearCounts={props.yearCounts} undated={props.undated} activeYear={filters.year} undatedActive={filters.decade === 'none'} onPickYear={props.onPickYear} onPickUndated={() => setFilter('decade', filters.decade === 'none' ? null : 'none')} />
+        </div>
+        {!props.isHome && (
           <div className="flex flex-wrap items-center gap-2">
             <DecadePills {...props} />
             <YearSelect {...props} />
